@@ -1,0 +1,51 @@
+{
+	"name": "@sumeria/root",
+	"private": "true",
+	"version": "1.0.0",
+	"description": "",
+	"author": "James Prevett <jp@jamespre.dev> (https://jamespre.dev)",
+	"license": "LGPL-3.0-or-later",
+	"funding": {
+		"type": "individual",
+		"url": "https://github.com/sponsors/james-pre"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/james-pre/sumeria.git"
+	},
+	"type": "module",
+	"bugs": {
+		"url": "https://github.com/james-pre/sumeria/issues"
+	},
+	"homepage": "https://github.com/james-pre/sumeria#readme",
+	"scripts": {
+		"format:check": "prettier --check .",
+		"format": "prettier --write .",
+		"build": "tsc -b",
+		"lint": "tsc -b --noEmit && eslint src"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^24.7.0",
+		"eslint": "^10.1.0",
+		"globals": "^17.4.0",
+		"prettier": "^3.2.5",
+		"typescript": "^6.0.2",
+		"typescript-eslint": "^8.58.0",
+		"utilium": "^3.0.0"
+	},
+	"prettier": {
+		"singleQuote": true,
+		"useTabs": true,
+		"trailingComma": "es5",
+		"tabWidth": 4,
+		"printWidth": 120,
+		"arrowParens": "avoid",
+		"experimentalOperatorPosition": "start"
+	}
+}
