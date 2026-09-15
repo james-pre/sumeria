@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": ".",
+		"outDir": "dist",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules", "dist"],
+	"references": [{ "path": "../core" }, { "path": "../render" }]
+}

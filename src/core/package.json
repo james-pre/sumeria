@@ -1,0 +1,36 @@
+{
+	"name": "@sumeria/core",
+	"version": "0.1.0",
+	"description": "Core ECS management for Sumeria",
+	"author": "James Prevett <jp@jamespre.dev> (https://jamespre.dev)",
+	"license": "LGPL-3.0-or-later",
+	"funding": {
+		"type": "individual",
+		"url": "https://github.com/sponsors/james-pre"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/james-pre/sumeria.git",
+		"directory": "src/core"
+	},
+	"homepage": "https://github.com/james-pre/sumeria#readme",
+	"bugs": {
+		"url": "https://github.com/james-pre/sumeria/issues"
+	},
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./*": "./dist/*.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc"
+	},
+	"peerDependencies": {
+		"utilium": "^3.0.0"
+	}
+}

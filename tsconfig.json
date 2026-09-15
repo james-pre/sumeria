@@ -4,13 +4,20 @@
 		"module": "NodeNext",
 		"target": "ES2024",
 		"moduleResolution": "NodeNext",
-		"rootDir": "src",
-		"outDir": "dist",
 		"noImplicitThis": true,
 		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
 		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
 		"strict": true
 	},
-	"include": ["./src/**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"files": [],
+	"references": [
+		{ "path": "./src/client" },
+		{ "path": "./src/core" },
+		{ "path": "./src/render" },
+		{ "path": "./src/server" }
+	]
 }

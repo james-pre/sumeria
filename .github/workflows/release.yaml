@@ -8,20 +8,13 @@ jobs:
     ci:
         uses: ./.github/workflows/ci.yaml
         permissions:
-            contents: write
-            id-token: write
-            pages: write
-    docs:
-        needs: ci
+            contents: read
+    release:
         runs-on: ubuntu-latest
-        name: Docs build and deploy
+        needs: ci
         permissions:
-            contents: write
             id-token: write
-            pages: write
-        environment:
-            name: github-pages
-            url: ${{ steps.deploy.outputs.page_url }}
+            contents: write
         steps:
             - name: Checkout
               uses: actions/checkout@v5
@@ -30,42 +23,28 @@ jobs:
               uses: actions/setup-node@v6
               with:
                   node-version: latest
-
-            - name: Install dependencies
-              run: npm install
-
-            - name: Build
-              run: npx typedoc
-
-            - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                  path: ./docs
-
-            - name: Deploy
-              id: deploy
-              uses: actions/deploy-pages@v4
-
-    release:
-        runs-on: ubuntu-latest
-        needs: ci
-        permissions:
-            id-token: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-
-            - name: Setup npm authentication
-              uses: actions/setup-node@v6
-              with:
-                  node-version: latest
                   registry-url: https://registry.npmjs.org/
 
+            - name: Use latest npm version
+              run: npm install -g npm@latest
+
             - name: Install dependencies
-              run: npm install
+              run: npm ci
+
+            - name: Resolve package
+              id: resolve
+              run: |
+                  PACKAGE="$(echo ${{ github.event.release.tag_name }} | sed 's/@.*$//')"
+                  if [ ! -d "packages/$PACKAGE" ]; then
+                      echo "Package directory not found"
+                      exit 1
+                  fi
+                  echo "path=packages/$PACKAGE" >> $GITHUB_OUTPUT
+                  echo "::debug::Resolved package to 'packages/$PACKAGE'"
 
             - name: Build
-              run: npx tsc
+              run: npx tsc -b
 
             - name: Publish
               run: npm publish --access=public --provenance
+              working-directory: ${{ steps.resolve.outputs.path }}

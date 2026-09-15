@@ -1,16 +1,14 @@
 {
 	"name": "@sumeria/root",
-	"private": "true",
+	"private": true,
 	"version": "1.0.0",
-	"description": "",
+	"description": "A WIP game engine",
 	"author": "James Prevett <jp@jamespre.dev> (https://jamespre.dev)",
 	"license": "LGPL-3.0-or-later",
 	"funding": {
 		"type": "individual",
 		"url": "https://github.com/sponsors/james-pre"
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/james-pre/sumeria.git"
@@ -20,17 +18,27 @@
 		"url": "https://github.com/james-pre/sumeria/issues"
 	},
 	"homepage": "https://github.com/james-pre/sumeria#readme",
+	"workspaces": [
+		"src/*"
+	],
 	"scripts": {
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
 		"build": "tsc -b",
-		"lint": "tsc -b --noEmit && eslint src"
+		"watch": "tsc -b -w",
+		"lint": "tsc -b && eslint src",
+		"clean": "rm -rf src/*/dist src/*/tsconfig.tsbuildinfo"
 	},
 	"engines": {
 		"node": ">=22.0.0"
 	},
 	"devDependencies": {
+		"@babylonjs/core": "^9.26.1",
 		"@eslint/js": "^10.0.1",
+		"@sumeria/client": "workspace:*",
+		"@sumeria/core": "workspace:*",
+		"@sumeria/render": "workspace:*",
+		"@sumeria/server": "workspace:*",
 		"@types/node": "^24.7.0",
 		"eslint": "^10.1.0",
 		"globals": "^17.4.0",
