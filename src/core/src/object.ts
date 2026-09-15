@@ -1,6 +1,7 @@
-export interface GameObject<SaveData = unknown> {
-	init(): void | Promise<void>;
-	tick(): void | Promise<void>;
-	save(): SaveData;
+export interface GameObject<Data extends object> {
+	init(): void;
+	tick(): void;
+	save(): Data;
+	load(data: Data): void;
 	dispose(): void;
 }
