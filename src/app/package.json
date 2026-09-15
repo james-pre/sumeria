@@ -1,7 +1,7 @@
 {
-	"name": "@sumeria/client",
+	"name": "@sumeria/app",
 	"version": "0.1.0",
-	"description": "Client",
+	"description": "Electron app hosting the client",
 	"author": "James Prevett <jp@jamespre.dev> (https://jamespre.dev)",
 	"license": "LGPL-3.0-or-later",
 	"funding": {
@@ -11,33 +11,32 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/james-pre/sumeria.git",
-		"directory": "src/client"
+		"directory": "src/app"
 	},
 	"homepage": "https://github.com/james-pre/sumeria#readme",
 	"bugs": {
 		"url": "https://github.com/james-pre/sumeria/issues"
 	},
 	"type": "module",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "dist/main.js",
+	"types": "dist/main.d.ts",
 	"exports": {
-		".": "./dist/index.js",
-		"./index.html": "./dist/index.html",
+		".": "./dist/main.js",
 		"./*": "./dist/*.js"
 	},
 	"files": [
 		"dist"
 	],
 	"scripts": {
-		"build": "tsc && cp src/ui/index.html dist/"
+		"build": "tsc"
 	},
 	"peerDependencies": {
-		"@sumeria/core": "^0.1.0",
-		"@sumeria/render": "^0.1.0",
+		"@sumeria/client": "^0.1.0",
+		"@sumeria/server": "^0.1.0",
 		"utilium": "^3.0.0",
 		"zod": "^4.5.0"
 	},
-	"devDependencies": {
-		"esbuild": "^0.28.2"
+	"dependencies": {
+		"electron": "^44.4.0"
 	}
 }

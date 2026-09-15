@@ -24,8 +24,8 @@
 	"scripts": {
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
-		"build": "tsc -b",
-		"watch": "tsc -b -w",
+		"build": "cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b",
+		"watch": "cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b -w",
 		"lint": "tsc -b && eslint src",
 		"clean": "rm -rf src/*/dist src/*/tsconfig.tsbuildinfo"
 	},
@@ -35,6 +35,7 @@
 	"devDependencies": {
 		"@babylonjs/core": "^9.26.1",
 		"@eslint/js": "^10.0.1",
+		"@sumeria/app": "workspace:*",
 		"@sumeria/client": "workspace:*",
 		"@sumeria/core": "workspace:*",
 		"@sumeria/render": "workspace:*",
@@ -55,5 +56,8 @@
 		"printWidth": 120,
 		"arrowParens": "avoid",
 		"experimentalOperatorPosition": "start"
+	},
+	"allowScripts": {
+		"esbuild": true
 	}
 }

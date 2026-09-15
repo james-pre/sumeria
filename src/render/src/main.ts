@@ -1,10 +1,10 @@
-import { engine, init } from './engine.js';
+import { init } from './engine.js';
 import type { Incoming } from './rpc.js';
+import { update } from './world.js';
 
 let canvas: OffscreenCanvas;
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-addEventListener('message', async event => {
+addEventListener('message', event => {
 	if (!event.data) return;
 
 	const data = event.data as Incoming;
@@ -12,13 +12,14 @@ addEventListener('message', async event => {
 	switch (data.$) {
 		case 'init':
 			canvas = data.canvas;
-			await init(data.canvas);
+			init(data.canvas);
 			break;
 		case 'resize':
 			canvas.width = data.width;
 			canvas.height = data.height;
 			break;
 		case 'tick':
+			update(data.world);
 			break;
 	}
 });

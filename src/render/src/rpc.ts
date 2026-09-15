@@ -1,3 +1,5 @@
+import type { WorldData } from '@sumeria/core';
+
 export interface Init {
 	$: 'init';
 	canvas: OffscreenCanvas;
@@ -11,6 +13,7 @@ export interface Resize {
 
 export interface Tick {
 	$: 'tick';
+	world: WorldData;
 }
 
 export type Incoming = Init | Resize | Tick;

@@ -72,7 +72,7 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 	static WithComponents<const T extends (new (...args: any[]) => Component<any, any>)[]>(
 		components: T,
 		config: ComponentsConfig<T>
-	): new () => Entity<ComponentsSaveData<T>> & ComponentsMixins<T> {
+	): new (world: World) => Entity<ComponentsSaveData<T>> & ComponentsMixins<T> {
 		class EntityWithComponents extends Entity<ComponentsSaveData<T>> {
 			constructor(world: World) {
 				super(world);
@@ -81,7 +81,9 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 				}
 			}
 		}
-		return EntityWithComponents as unknown as new () => Entity<ComponentsSaveData<T>> & ComponentsMixins<T>;
+		return EntityWithComponents as unknown as new (
+			world: World
+		) => Entity<ComponentsSaveData<T>> & ComponentsMixins<T>;
 	}
 
 	static ref<E extends Entity>(

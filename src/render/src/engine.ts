@@ -1,7 +1,12 @@
-import { Engine } from '@babylonjs/core';
+import { Engine, Scene } from '@babylonjs/core';
 
-export let engine: Engine;
+export let engine: Engine, scene: Scene;
 
-export async function init(canvas: OffscreenCanvas) {
+export function init(canvas: OffscreenCanvas) {
 	engine = new Engine(canvas, true, { audioEngine: true });
+	scene = new Scene(engine);
+
+	engine.runRenderLoop(() => {
+		scene.render();
+	});
 }
