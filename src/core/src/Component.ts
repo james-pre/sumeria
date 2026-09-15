@@ -30,6 +30,6 @@ export abstract class Component<
 	abstract init(): void;
 	abstract tick(): void;
 	abstract load(data: SaveData): void;
-	abstract save(): SaveData;
+	abstract toJSON(): SaveData;
 	abstract dispose(): void;
 }

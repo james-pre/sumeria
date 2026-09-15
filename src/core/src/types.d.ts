@@ -6,4 +6,7 @@ declare global {
 	const crypto: {
 		randomUUID(): UUID;
 	};
+
+	function setTimeout(callback: () => unknown, ms?: number): number;
+	function clearTimeout(handle: number): void;
 }

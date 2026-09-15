@@ -38,6 +38,8 @@
 		"utilium": "^3.0.0"
 	},
 	"dependencies": {
+		"@james-pre/config": "^1.1.0",
+		"@types/node": "^24.13.4",
 		"socket.io": "^4.8.3"
 	}
 }

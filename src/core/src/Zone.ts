@@ -21,7 +21,7 @@ export class Zone {
 		this.id = data.id;
 	}
 
-	save(): ZoneData {
+	toJSON(): ZoneData {
 		return {
 			id: this.id,
 		};

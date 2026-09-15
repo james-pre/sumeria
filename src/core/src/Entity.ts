@@ -5,6 +5,8 @@ import { Vec3 } from './vectors.js';
 import type { World } from './World.js';
 
 export interface EntitySaveData {
+	/** Entity type */
+	$: string;
 	id: UUID;
 	position: Tuple<number, 3>;
 	rotation: Tuple<number, 3>;
@@ -45,17 +47,18 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		}
 	}
 
-	save(): EntitySaveData & SaveData {
+	toJSON(): EntitySaveData & SaveData {
 		const data = Object.create(null);
 
 		Object.assign(data, {
+			$: this.constructor.name,
 			id: this.id,
 			position: this.position.data,
 			rotation: this.rotation.data,
 		});
 
 		for (const component of this.components) {
-			Object.assign(data, component.save());
+			Object.assign(data, component.toJSON());
 		}
 
 		return data;

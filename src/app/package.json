@@ -37,6 +37,7 @@
 		"zod": "^4.5.0"
 	},
 	"dependencies": {
-		"electron": "^44.4.0"
+		"electron": "^44.4.0",
+		"ioium": "^1.9.0"
 	}
 }

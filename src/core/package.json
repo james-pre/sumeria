@@ -32,5 +32,8 @@
 	},
 	"peerDependencies": {
 		"utilium": "^3.0.0"
+	},
+	"dependencies": {
+		"eventemitter3": "^5.0.4"
 	}
 }
