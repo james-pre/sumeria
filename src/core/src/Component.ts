@@ -1,3 +1,5 @@
+import type { GameObject } from './object.js';
+
 export type Mixin<C extends Component> = Omit<C, keyof Component>;
 
 export type ComponentsMixins<T extends (typeof Component<any, any>)[]> = T extends []
@@ -18,7 +20,10 @@ export type ComponentsConfig<T extends (typeof Component<any, any>)[]> = T exten
 		? C & ComponentsConfig<Rest>
 		: never;
 
-export abstract class Component<SaveData extends object = {}, Config extends object = {}> {
+export abstract class Component<
+	SaveData extends object = {},
+	Config extends object = {},
+> implements GameObject<SaveData> {
 	constructor(protected readonly config: Config) {}
 
 	abstract init(): void | Promise<void>;

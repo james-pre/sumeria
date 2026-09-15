@@ -1,8 +1,9 @@
 import type { Component, ComponentsMixins, ComponentsSaveData, ComponentsConfig } from './Component.js';
+import type { GameObject } from './object.js';
 
 export interface EntitySaveData {}
 
-export class Entity<SaveData extends object = {}> {
+export class Entity<SaveData extends object = {}> implements GameObject<EntitySaveData & SaveData> {
 	protected components = new Set<Component>();
 
 	constructor() {}
@@ -11,8 +12,14 @@ export class Entity<SaveData extends object = {}> {
 
 	async tick() {}
 
-	save(): Promise<EntitySaveData & SaveData> {
+	save(): EntitySaveData & SaveData {
 		return Object.assign({}, ...Array.from(this.components).map(c => c.save()));
+	}
+
+	dispose() {
+		for (const component of this.components) {
+			component.dispose();
+		}
 	}
 
 	static WithComponents<const T extends (typeof Component<any, any>)[]>(
