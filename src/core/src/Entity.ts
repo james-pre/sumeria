@@ -1,5 +1,5 @@
 import type { Tuple, UUID } from 'utilium';
-import type { Component, ComponentsConfig, ComponentsMixins, ComponentsSaveData } from './Component.js';
+import type { Component, ComponentsConfig, ComponentsSaveData } from './Component.js';
 import type { GameObject } from './object.js';
 import { Vec3 } from './vectors.js';
 import type { World } from './World.js';
@@ -75,18 +75,16 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 	static WithComponents<const T extends (new (...args: any[]) => Component<any, any>)[]>(
 		components: T,
 		config: ComponentsConfig<T>
-	): new (world: World) => Entity<ComponentsSaveData<T>> & ComponentsMixins<T> {
+	): new (world: World) => Entity<ComponentsSaveData<T>> {
 		class EntityWithComponents extends Entity<ComponentsSaveData<T>> {
 			constructor(world: World) {
 				super(world);
 				for (const component of components) {
-					this.components.add(new component(config));
+					this.components.add(new component(this, config));
 				}
 			}
 		}
-		return EntityWithComponents as unknown as new (
-			world: World
-		) => Entity<ComponentsSaveData<T>> & ComponentsMixins<T>;
+		return EntityWithComponents;
 	}
 
 	static ref<E extends Entity>(

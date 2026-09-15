@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Entity } from './Entity.js';
 import type { GameObject } from './object.js';
-
-export type Mixin<C extends Component> = Omit<C, keyof Component>;
-
-export type ComponentsMixins<T extends (typeof Component<any, any>)[]> = T extends []
-	? {}
-	: T extends [infer C extends typeof Component<any, any>, ...infer Rest extends (typeof Component<any, any>)[]]
-		? Mixin<InstanceType<C>> & ComponentsMixins<Rest>
-		: never;
 
 export type ComponentsSaveData<T extends (typeof Component<any, any>)[]> = T extends []
 	? {}
@@ -25,7 +18,10 @@ export abstract class Component<
 	SaveData extends object = object,
 	Config extends object = object,
 > implements GameObject<SaveData> {
-	constructor(protected readonly config: Config) {}
+	constructor(
+		public readonly entity: Entity,
+		protected readonly config: Config
+	) {}
 
 	abstract init(): void;
 	abstract tick(): void;
