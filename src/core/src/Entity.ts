@@ -68,7 +68,8 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		this.world.entities.delete(this.id);
 	}
 
-	static WithComponents<const T extends (new (...args: unknown[]) => Component<any, any>)[]>(
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	static WithComponents<const T extends (new (...args: any[]) => Component<any, any>)[]>(
 		components: T,
 		config: ComponentsConfig<T>
 	): new () => Entity<ComponentsSaveData<T>> & ComponentsMixins<T> {
