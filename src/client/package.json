@@ -33,6 +33,7 @@
 	"peerDependencies": {
 		"@sumeria/core": "^0.1.0",
 		"@sumeria/render": "^0.1.0",
-		"utilium": "^3.0.0"
+		"utilium": "^3.0.0",
+		"zod": "^4.5.0"
 	}
 }

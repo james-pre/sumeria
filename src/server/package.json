@@ -36,5 +36,8 @@
 	"peerDependencies": {
 		"@sumeria/core": "^0.1.0",
 		"utilium": "^3.0.0"
+	},
+	"dependencies": {
+		"socket.io": "^4.8.3"
 	}
 }
