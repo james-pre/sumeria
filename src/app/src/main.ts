@@ -1,6 +1,9 @@
 import { app, BrowserWindow } from 'electron';
-import * as server from '@sumeria/server';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Worker } from 'node:worker_threads';
+
+const serverThread = new Worker(join(import.meta.dirname, 'server_thread.js'));
 
 app.whenReady()
 	.then(async () => {

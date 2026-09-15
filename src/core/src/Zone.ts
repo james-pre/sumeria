@@ -1,4 +1,3 @@
-import type { GameObject } from './object.js';
 import type { World } from './World.js';
 
 export interface ZoneData {
@@ -8,16 +7,15 @@ export interface ZoneData {
 /**
  * Part of the game world. This should be able to be rendered on its own.
  */
-export class Zone implements GameObject<ZoneData> {
-	id = 0;
+export class Zone {
+	static #nextId = 1;
+	id = Zone.#nextId++;
 
 	constructor(public readonly world: World) {}
 
 	init(): void {
 		this.world.zones.set(this.id, this);
 	}
-
-	tick(): void {}
 
 	load(data: ZoneData) {
 		this.id = data.id;

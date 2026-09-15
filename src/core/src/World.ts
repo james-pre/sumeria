@@ -20,7 +20,11 @@ export class World implements GameObject<WorldData> {
 
 	init() {}
 
-	tick() {}
+	tick() {
+		for (const entity of this.entities.values()) {
+			entity.tick();
+		}
+	}
 
 	load(data: WorldData) {
 		this.id = data.id;
