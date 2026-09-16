@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { ControlsConfig } from '@sumeria/client/controls';
 import * as esbuild from 'esbuild';
+import { spawn } from 'node:child_process';
 import * as io from 'ioium/node';
 import * as fs from 'node:fs';
 import { basename, dirname, extname, join, posix, relative, resolve, sep } from 'node:path';
@@ -229,7 +230,10 @@ async function bundle(target: Bundle, out: string, dev: boolean): Promise<io.job
 			// Everything is inlined, so the packaged app carries no node_modules.
 			external: target.node ? neverBundle : [],
 			banner: target.node ? { js: requireShim } : undefined,
-			sourcemap: dev ? 'inline' : false,
+			// Linked rather than inline: inlining a game engine's sourcemaps
+			// adds hundreds of megabytes to a file the browser parses on every
+			// load, while a sidecar map is only fetched when devtools open.
+			sourcemap: dev ? 'linked' : false,
 			minify: !dev,
 			logLevel: 'silent',
 		});
@@ -255,6 +259,34 @@ function builderConfig(config: GameConfig, app: string, icon: string | null) {
 	};
 }
 
+/**
+ * Run the assembled app in Electron, resolving with its exit code.
+ *
+ * @param args Extra arguments for Electron itself, from after a `--`.
+ */
+async function launch(out: string, args: string[]): Promise<number> {
+	let electron: string;
+
+	try {
+		// The npm package's entry point is the path to the binary.
+		electron = ((await import('electron')) as unknown as { default: string }).default;
+	} catch (error) {
+		io.exit(`Could not find Electron: ${io.errorText(error)}`, 1);
+	}
+
+	// Some toolchains export this to make the binary behave as plain Node,
+	// which would start the app with none of the Electron APIs available.
+	const env = { ...process.env };
+	delete env.ELECTRON_RUN_AS_NODE;
+
+	return await new Promise((resolve, reject) => {
+		const child = spawn(electron, [out, ...args], { stdio: 'inherit', env });
+
+		child.on('error', reject);
+		child.on('exit', code => resolve(code ?? 0));
+	});
+}
+
 export async function main(argv: string[]): Promise<void> {
 	const { values, positionals } = parseArgs({
 		args: argv,
@@ -270,16 +302,21 @@ export async function main(argv: string[]): Promise<void> {
 
 	const command = positionals[0] ?? 'build';
 
-	if (values.help || !['build', 'pack'].includes(command)) {
-		io.log('Usage: sumeria [build|pack] [options]\n');
+	if (values.help || !['build', 'dev', 'pack'].includes(command)) {
+		io.log('Usage: sumeria [build|dev|pack] [options] [-- <electron args>]\n');
 		io.log('  build              assemble the app into the output directory');
+		io.log('  dev                assemble unminified, then run it in Electron');
 		io.log('  pack               assemble, then package with electron-builder\n');
 		io.log('  -c, --config       path to the game config (default: game.json)');
-		io.log('      --dev          keep sourcemaps and skip minification');
+		io.log('      --dev          emit sourcemaps and skip minification');
 		io.log('      --skip-compile reuse the existing compiled output instead of running tsc');
 		io.log('  -v, --verbose      show debug output');
 		return;
 	}
+
+	// Minifying a game's dependencies is the slow part of a build, and nothing
+	// about running it locally needs that, so `dev` never does it.
+	const dev = values.dev || command === 'dev';
 
 	io._setDebugOutput(values.verbose);
 
@@ -345,7 +382,7 @@ export async function main(argv: string[]): Promise<void> {
 		{
 			concurrency: targets.length,
 			jobStartText: 'Bundling',
-			run: target => bundle(target, out, values.dev),
+			run: target => bundle(target, out, dev),
 			name: target => target.out,
 		},
 		targets
@@ -367,7 +404,7 @@ export async function main(argv: string[]): Promise<void> {
 		const to = join(out, 'icon' + extname(from));
 		io.track('Copying the icon', () => fs.copyFileSync(from, to));
 		icon = relative(root, to);
-	} else {
+	} else if (command !== 'dev') {
 		io.warnOnce('No "icon" in the game config; electron-builder will use its default.');
 	}
 
@@ -390,6 +427,20 @@ export async function main(argv: string[]): Promise<void> {
 		)
 	);
 
+	io.info(`Assembled ${relative(root, out) || '.'}`);
+
+	if (command === 'dev') {
+		io.info(`Starting ${config.name}`);
+
+		// Anything after `--` belongs to Electron, not to us.
+		const code = await launch(out, positionals.slice(1));
+
+		if (code) io.exit(`${config.name} exited with code ${code}`, code);
+		return;
+	}
+
+	// Only packaging reads this, but `build` writes it too so that `pack` can
+	// be run on its own afterwards.
 	const builderPath = join(root, 'electron-builder.json');
 
 	io.track('Writing the electron-builder config', () =>
@@ -398,8 +449,6 @@ export async function main(argv: string[]): Promise<void> {
 			JSON.stringify(builderConfig(config, relative(root, out), icon), null, '\t') + '\n'
 		)
 	);
-
-	io.info(`Assembled ${relative(root, out) || '.'}`);
 
 	if (command !== 'pack') return;
 
