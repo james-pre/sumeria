@@ -27,6 +27,9 @@
 	"files": [
 		"dist"
 	],
+	"bin": {
+		"sumeria": "dist/build.js"
+	},
 	"scripts": {
 		"build": "tsc"
 	},
@@ -38,6 +41,8 @@
 	},
 	"dependencies": {
 		"electron": "^44.4.0",
+		"electron-builder": "^26.15.3",
+		"esbuild": "^0.28.2",
 		"ioium": "^1.9.0"
 	}
 }

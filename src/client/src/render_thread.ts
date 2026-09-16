@@ -3,7 +3,9 @@ import type * as rpc from '@sumeria/render/rpc';
 export let thread: Worker;
 
 export function init() {
-	thread = new Worker('render.js', { type: 'module' });
+	// Resolved against this module rather than the document, so the bundle
+	// keeps working regardless of where the page itself lives.
+	thread = new Worker(new URL('render.js', import.meta.url), { type: 'module' });
 
 	const canvas = document.createElement('canvas');
 	canvas.id = 'render';

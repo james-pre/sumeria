@@ -4,7 +4,9 @@
 		"composite": true,
 		"rootDir": "src",
 		"outDir": "dist",
-		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		// build.ts is run directly by Node, so nothing here may need emitting.
+		"erasableSyntaxOnly": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"],

@@ -1,10 +1,21 @@
-import { World } from '@sumeria/core';
+import { registryFor, World, type GameManifest } from '@sumeria/core';
 import { io } from './socket.js';
 
-export const world = new World();
+/** Set by {@link init}. */
+export let world: World;
 
-world.on('tick', () => {
-	const data = world.toJSON();
+/**
+ * Create the server's world from the games' manifests.
+ *
+ * Called by the generated entry point rather than by game code, so consumers
+ * never wire this up themselves.
+ */
+export function init(...games: GameManifest[]): World {
+	world = new World(registryFor(...games));
 
-	io.emit('tick', data);
-});
+	world.on('tick', () => {
+		io.emit('tick', world.toJSON());
+	});
+
+	return world;
+}
