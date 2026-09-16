@@ -1,8 +1,11 @@
 import type { WorldData } from '@sumeria/core';
+import type { UUID } from 'utilium';
 
 export interface Init {
 	$: 'init';
 	canvas: OffscreenCanvas;
+	width: number;
+	height: number;
 }
 
 export interface Resize {
@@ -16,4 +19,9 @@ export interface Tick {
 	world: WorldData;
 }
 
-export type Incoming = Init | Resize | Tick;
+export interface Player {
+	$: 'player';
+	id: UUID | null;
+}
+
+export type Incoming = Init | Resize | Tick | Player;

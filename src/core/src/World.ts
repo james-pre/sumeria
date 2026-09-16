@@ -23,7 +23,7 @@ export class World
 	name?: string;
 	lastSave = Temporal.Now.instant();
 
-	protected tickRate = 20;
+	tickRate = 20;
 
 	get #tickInterval(): number {
 		if (!Number.isSafeInteger(this.tickRate) || this.tickRate <= 0) this.tickRate = 20;

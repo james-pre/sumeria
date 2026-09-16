@@ -29,6 +29,10 @@ export abstract class Component<
 
 	abstract init(): void;
 	abstract tick(): void;
+
+	/** Called for every player action; implement it to handle the relevant ones. */
+	input?(action: string, active: boolean): void;
+
 	abstract load(data: SaveData): void;
 	abstract toJSON(): SaveData;
 	abstract dispose(): void;

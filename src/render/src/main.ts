@@ -1,25 +1,30 @@
-import { init } from './engine.js';
+import * as engine from './engine.js';
+import { load, type RenderManifest } from './renders.js';
 import type { Incoming } from './rpc.js';
-import { update } from './world.js';
+import { setPlayer, update } from './world.js';
 
-let canvas: OffscreenCanvas;
+export function start(...games: RenderManifest[]): void {
+	load(...games);
 
-addEventListener('message', event => {
-	if (!event.data) return;
+	addEventListener('message', event => {
+		if (!event.data) return;
 
-	const data = event.data as Incoming;
+		const data = event.data as Incoming;
 
-	switch (data.$) {
-		case 'init':
-			canvas = data.canvas;
-			init(data.canvas);
-			break;
-		case 'resize':
-			canvas.width = data.width;
-			canvas.height = data.height;
-			break;
-		case 'tick':
-			update(data.world);
-			break;
-	}
-});
+		switch (data.$) {
+			case 'init':
+				engine.init(data.canvas);
+				engine.resize(data.width, data.height);
+				break;
+			case 'resize':
+				engine.resize(data.width, data.height);
+				break;
+			case 'player':
+				setPlayer(data.id);
+				break;
+			case 'tick':
+				update(data.world);
+				break;
+		}
+	});
+}

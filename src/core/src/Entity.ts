@@ -30,6 +30,21 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		return null;
 	}
 
+	has(type: ComponentConstructor): boolean {
+		for (const component of this.components) {
+			if (component instanceof type) return true;
+		}
+
+		return false;
+	}
+
+	/** Passes a player action to every component that handles input. */
+	input(action: string, active: boolean) {
+		for (const component of this.components) {
+			component.input?.(action, active);
+		}
+	}
+
 	init() {
 		if (this.world.entities.has(this.id) && this.world.entities.get(this.id) !== this)
 			throw new ReferenceError(
@@ -130,6 +145,7 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 
 export interface EntityConstructor<E extends Entity<any> = Entity<any>> {
 	new (world: World): E;
+	readonly name: string;
 }
 
 export const entityTypes = new Map<string, EntityConstructor>([['Entity', Entity]]);
