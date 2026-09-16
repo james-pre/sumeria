@@ -3,7 +3,7 @@ import type * as rpc from '@sumeria/render/rpc';
 export let thread: Worker;
 
 export function init() {
-	thread = new Worker('render.js', { type: 'module' });
+	thread = new Worker(new URL('render.js', import.meta.url), { type: 'module' });
 
 	const canvas = document.createElement('canvas');
 	canvas.id = 'render';
