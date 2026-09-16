@@ -45,7 +45,8 @@ export class World
 		if (Number.isSafeInteger(id) && id >= this.#nextZoneId) this.#nextZoneId = id + 1;
 	}
 
-	protected tickRate = 20;
+	/** How many times a second {@link tick} runs. */
+	tickRate = 20;
 
 	get #tickInterval(): number {
 		if (!Number.isSafeInteger(this.tickRate) || this.tickRate <= 0) this.tickRate = 20;

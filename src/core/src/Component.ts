@@ -33,4 +33,12 @@ export abstract class Component<
 	abstract load(data: SaveData): void;
 	abstract toJSON(): SaveData;
 	abstract dispose(): void;
+
+	/**
+	 * Respond to an action from the client controlling this entity.
+	 *
+	 * Optional: components that do not take input leave it unimplemented.
+	 * @param active Whether the action started (true) or ended (false).
+	 */
+	input?(action: string, active: boolean): void;
 }

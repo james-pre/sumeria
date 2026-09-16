@@ -1,0 +1,13 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": "src",
+		"outDir": "dist",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"],
+	"references": [{ "path": "../src/core" }, { "path": "../src/server" }]
+}

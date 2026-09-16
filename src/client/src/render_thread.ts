@@ -1,3 +1,4 @@
+import type { WorldData } from '@sumeria/core';
 import type * as rpc from '@sumeria/render/rpc';
 
 export let thread: Worker;
@@ -29,4 +30,9 @@ export function init() {
 			height: canvas.clientHeight,
 		} satisfies rpc.Resize)
 	);
+}
+
+/** Hand the renderer a new world state to draw. */
+export function tick(world: WorldData) {
+	thread.postMessage({ $: 'tick', world } satisfies rpc.Tick);
 }

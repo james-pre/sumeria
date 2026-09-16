@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ActionBinding } from './controls.js';
 import { Entity } from './Entity.js';
 import type { World } from './World.js';
 
@@ -69,6 +70,13 @@ export interface GameManifest {
 	entities?: Record<string, EntityConstructor>;
 	/** Shader sources, keyed by their unqualified name. */
 	shaders?: Record<string, string>;
+	/**
+	 * The unqualified entity name to spawn for each connected client.
+	 * Without it, clients connect as spectators.
+	 */
+	player?: string;
+	/** Actions bound to input triggers, keyed by action name. */
+	controls?: Record<string, ActionBinding>;
 }
 
 /** Identity function that pins a manifest to {@link GameManifest} for type checking. */

@@ -1,72 +1,60 @@
+import { keyLocations, triggerOf, type ActionBinding, type TriggerData } from '@sumeria/core';
 import * as z from 'zod';
 
-export const TriggerModifiers = z.object({
+/**
+ * Validates a trigger on the way in from a game's `controls.json`.
+ * The `satisfies` keeps the schema and {@link TriggerData} from drifting apart.
+ */
+export const Trigger = z.object({
 	ctrl: z.boolean().optional(),
 	shift: z.boolean().optional(),
 	alt: z.boolean().optional(),
 	meta: z.boolean().optional(),
-});
-export interface TriggerModifiers extends z.infer<typeof TriggerModifiers> {}
+	key: z.string().optional(),
+	location: z.literal(keyLocations).optional(),
+	button: z.int().nonnegative().optional(),
+}) satisfies z.ZodType<TriggerData>;
 
-export const MouseTrigger = z.object({
-	...TriggerModifiers.shape,
-	button: z.int(),
-});
+export const Binding = z.object({
+	default: Trigger,
+	current: Trigger.optional(),
+}) satisfies z.ZodType<ActionBinding>;
 
-export interface MouseTrigger extends z.infer<typeof MouseTrigger> {}
+export const ControlsConfig = z.record(z.string(), Binding);
 
-/** @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/location */
-export const enum KeyLocation {
-	Standard,
-	Left,
-	Right,
-	Numpad,
+export type ControlsConfig = Record<string, ActionBinding>;
+
+/** A trigger naming neither a key nor a button fires on modifier state alone. */
+export function isModifierOnly(trigger: TriggerData): boolean {
+	return trigger.key === undefined && trigger.button === undefined;
 }
 
-const keyLocations = ['standard', 'left', 'right', 'numpad'] as const satisfies Record<KeyLocation, string>;
-
-export const KeyboardTrigger = z.object({
-	...TriggerModifiers.shape,
-	key: z.string(),
-	location: z
-		.literal(keyLocations)
-		.transform<KeyLocation>(v => keyLocations.indexOf(v))
-		.optional(),
-});
-
-export interface KeyboardTrigger extends z.infer<typeof KeyboardTrigger> {}
-
-export const Trigger = z.union([KeyboardTrigger, MouseTrigger]);
-export type Trigger = KeyboardTrigger | MouseTrigger;
-
-export interface WithAction<TData extends unknown[]> {
-	action(...args: TData): unknown;
+function modifiersMatch(trigger: TriggerData, event: KeyboardEvent | MouseEvent): boolean {
+	return !(
+		(trigger.ctrl !== undefined && trigger.ctrl !== event.ctrlKey)
+		|| (trigger.shift !== undefined && trigger.shift !== event.shiftKey)
+		|| (trigger.alt !== undefined && trigger.alt !== event.altKey)
+		|| (trigger.meta !== undefined && trigger.meta !== event.metaKey)
+	);
 }
 
-export interface KeyboardHandler<TData extends unknown[]> extends KeyboardTrigger, WithAction<TData> {}
+export function isMatch(trigger: TriggerData, event: KeyboardEvent | MouseEvent): boolean {
+	if (!modifiersMatch(trigger, event)) return false;
 
-export interface MouseHandler<TData extends unknown[]> extends MouseTrigger, WithAction<TData> {}
+	if (trigger.button !== undefined) return 'button' in event && event.button === trigger.button;
 
-export type Handler<TData extends unknown[]> = KeyboardHandler<TData> | MouseHandler<TData>;
+	if (trigger.key !== undefined) {
+		if (!('key' in event) || event.key.toLowerCase() !== trigger.key.toLowerCase()) return false;
+		return trigger.location === undefined || keyLocations[event.location] === trigger.location;
+	}
 
-export function isMatch(trigger: Trigger, event: KeyboardEvent | MouseEvent): boolean {
-	if (
-		('ctrl' in trigger && trigger.ctrl !== event.ctrlKey)
-		|| ('shift' in trigger && trigger.shift !== event.shiftKey)
-		|| ('alt' in trigger && trigger.alt !== event.altKey)
-		|| ('meta' in trigger && trigger.meta !== event.metaKey)
-	)
-		return false;
-
-	return 'key' in trigger
-		? 'key' in event
-				&& event.key === trigger.key
-				&& (!('location' in trigger) || trigger.location === event.location)
-		: 'button' in event && event.button === trigger.button;
+	// Modifiers only, and they matched.
+	return true;
 }
 
-export function find<T extends Trigger>(triggers: T[], event: KeyboardEvent | MouseEvent): T | undefined {
-	for (const trigger of triggers) {
-		if (isMatch(trigger, event)) return trigger;
+/** The name of the first action whose trigger matches the event. */
+export function find(controls: ControlsConfig, event: KeyboardEvent | MouseEvent): string | undefined {
+	for (const [action, binding] of Object.entries(controls)) {
+		if (isMatch(triggerOf(binding), event)) return action;
 	}
 }

@@ -43,6 +43,13 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		return false;
 	}
 
+	/** Dispatch an action from the controlling client to whichever components handle it. */
+	input(action: string, active: boolean) {
+		for (const component of this.components) {
+			component.input?.(action, active);
+		}
+	}
+
 	init() {
 		this.world.entities.set(this.id, this);
 		for (const component of this.components) {
