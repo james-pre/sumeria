@@ -1,8 +1,4 @@
-import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera.js';
-import { Engine } from '@babylonjs/core/Engines/engine.js';
-import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight.js';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
-import { Scene } from '@babylonjs/core/scene.js';
+import { ArcRotateCamera, Engine, HemisphericLight, Scene, Vector3 } from '@babylonjs/core';
 
 export let engine: Engine, scene: Scene, camera: ArcRotateCamera;
 

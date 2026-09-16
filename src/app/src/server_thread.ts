@@ -27,8 +27,10 @@ export type FromServer = Listen;
 export function start(...games: GameManifest[]): void {
 	if (!parentPort) exit('The server thread can not be run on its own!', 2);
 
-	server.init(...games);
+	const world = server.init(...games);
 	server.io.listen(0);
+
+	world.start();
 
 	parentPort.on('message', (message: ToServer) => {
 		switch (message.$) {

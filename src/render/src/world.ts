@@ -14,6 +14,9 @@ export function setPlayer(id: UUID | null) {
 	player = id;
 }
 
+/** Entity types already reported as unrenderable, so the warning fires once. */
+const warnedFor = new Set<string>();
+
 /** Bring the scene in line with the world state the server sent. */
 export function update(data: WorldData, renders: RenderRegistry) {
 	world = data;
@@ -24,7 +27,13 @@ export function update(data: WorldData, renders: RenderRegistry) {
 		const renderer = renders.get(entity.$);
 
 		if (!renderer) {
-			// Nothing to draw it with; skip rather than failing the frame.
+			// Skip rather than failing the frame, but say so once: an entity
+			// silently missing from the scene is otherwise hard to explain.
+			if (!warnedFor.has(entity.$)) {
+				warnedFor.add(entity.$);
+				console.warn(`[render] no renderer for "${entity.$}"; it will be invisible`);
+			}
+
 			continue;
 		}
 

@@ -60,6 +60,7 @@
 		"experimentalOperatorPosition": "start"
 	},
 	"allowScripts": {
-		"esbuild": true
+		"esbuild": true,
+		"electron": true
 	}
 }

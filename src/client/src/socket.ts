@@ -12,6 +12,14 @@ export let welcome: Welcome | null = null;
 export function init(port: number): Socket<ServerEvents, ClientEvents> {
 	socket = connect(`http://localhost:${port}`, { transports: ['websocket'] });
 
+	socket.on('connect', () => {
+		console.info('[socket] connected to the server on port', port);
+	});
+
+	socket.on('connect_error', error => {
+		console.error('[socket] could not connect:', error.message);
+	});
+
 	socket.on('welcome', info => {
 		welcome = info;
 		render.setPlayer(info.entity);
