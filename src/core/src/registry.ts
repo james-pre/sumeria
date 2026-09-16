@@ -4,9 +4,6 @@ import type { World } from './World.js';
 
 /**
  * A constructor for an entity type that can be restored from save data.
- *
- * `Entity.WithComponents` produces exactly this shape, so a consumer's entity
- * classes satisfy it without any extra annotation.
  */
 export interface EntityConstructor<E extends Entity<any> = Entity<any>> {
 	new (world: World): E;
@@ -17,9 +14,6 @@ export const baseEntityType = 'sumeria:entity';
 
 /**
  * Maps stable type ids to the classes that implement them.
- *
- * Type ids are assigned by the game manifest rather than derived from
- * `constructor.name`, so they survive minification and class renames.
  */
 export class Registry {
 	readonly #byType = new Map<string, EntityConstructor>();
@@ -64,9 +58,6 @@ export class Registry {
 
 /**
  * Everything a game contributes to the engine.
- *
- * Written by hand while bootstrapping; once `build.ts` lands this is generated
- * from the convention directories (`src/entities`, `src/shaders`, ...).
  */
 export interface GameManifest {
 	/**
