@@ -1,7 +1,14 @@
 import type { WorldData } from '@sumeria/core';
 import type * as rpc from '@sumeria/render/rpc';
+import type { UUID } from 'utilium';
 
 export let thread: Worker;
+
+/** Backing-store size, so the scene is not soft on a high-DPI display. */
+function size(canvas: HTMLCanvasElement): [width: number, height: number] {
+	const scale = devicePixelRatio || 1;
+	return [Math.round(canvas.clientWidth * scale), Math.round(canvas.clientHeight * scale)];
+}
 
 export function init() {
 	// Resolved against this module rather than the document, so the bundle
@@ -11,28 +18,26 @@ export function init() {
 	const canvas = document.createElement('canvas');
 	canvas.id = 'render';
 	document.body.appendChild(canvas);
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
+
+	// Read after the canvas is in the document: before that it has no layout,
+	// so the size would come back as zero.
+	const [width, height] = size(canvas);
 	const offscreen = canvas.transferControlToOffscreen();
 
-	thread.postMessage(
-		{
-			$: 'init',
-			canvas: offscreen,
-		} satisfies rpc.Init,
-		[offscreen]
-	);
+	thread.postMessage({ $: 'init', canvas: offscreen, width, height } satisfies rpc.Init, [offscreen]);
 
-	addEventListener('resize', () =>
-		thread.postMessage({
-			$: 'resize',
-			width: canvas.clientWidth,
-			height: canvas.clientHeight,
-		} satisfies rpc.Resize)
-	);
+	addEventListener('resize', () => {
+		const [width, height] = size(canvas);
+		thread.postMessage({ $: 'resize', width, height } satisfies rpc.Resize);
+	});
 }
 
 /** Hand the renderer a new world state to draw. */
 export function tick(world: WorldData) {
-	thread.postMessage({ $: 'tick', world } satisfies rpc.Tick);
+	thread?.postMessage({ $: 'tick', world } satisfies rpc.Tick);
+}
+
+/** Tell the renderer which entity the camera should follow. */
+export function setPlayer(id: UUID | null) {
+	thread?.postMessage({ $: 'player', id } satisfies rpc.Player);
 }

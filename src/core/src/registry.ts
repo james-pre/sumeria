@@ -68,8 +68,6 @@ export interface GameManifest {
 	id: string;
 	/** Entity classes, keyed by their unqualified name. */
 	entities?: Record<string, EntityConstructor>;
-	/** Shader sources, keyed by their unqualified name. */
-	shaders?: Record<string, string>;
 	/**
 	 * The unqualified entity name to spawn for each connected client.
 	 * Without it, clients connect as spectators.

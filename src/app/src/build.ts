@@ -109,6 +109,7 @@ function generate(
 	dir: string,
 	config: GameConfig,
 	entities: Found[],
+	renders: Found[],
 	shaders: Found[],
 	controls: ControlsConfig | null
 ): void {
@@ -122,17 +123,25 @@ function generate(
 
 	const fields = [`\tid: ${JSON.stringify(config.id)},`, `\tentities: {${entries}\n\t},`];
 
+	if (config.player) fields.push(`\tplayer: ${JSON.stringify(config.player)},`);
+
+	if (controls) fields.push(`\tcontrols: ${JSON.stringify(controls, null, '\t').replaceAll('\n', '\n\t')},`);
+
+	// Renderers live in their own manifest so Babylon, and the game's render
+	// code, stay out of the client and server bundles.
+	const renderImports = renders.map(r => `import { ${r.export} } from '${specifier(dir, r.path)}';`);
+
+	const renderEntries = renders.map(r => `\n\t\t${JSON.stringify(r.name)}: ${r.export},`).join('');
+
+	const renderFields = [`\tid: ${JSON.stringify(config.id)},`, `\tentities: {${renderEntries}\n\t},`];
+
 	if (shaders.length) {
 		const sources = shaders
 			.map(s => `\n\t\t${JSON.stringify(s.name)}: ${JSON.stringify(fs.readFileSync(s.path, 'utf8'))},`)
 			.join('');
 
-		fields.push(`\tshaders: {${sources}\n\t},`);
+		renderFields.push(`\tshaders: {${sources}\n\t},`);
 	}
-
-	if (config.player) fields.push(`\tplayer: ${JSON.stringify(config.player)},`);
-
-	if (controls) fields.push(`\tcontrols: ${JSON.stringify(controls, null, '\t').replaceAll('\n', '\n\t')},`);
 
 	const files: Record<string, string[]> = {
 		'manifest.ts': [
@@ -146,12 +155,32 @@ function generate(
 			'',
 		],
 
+		'renders.ts': [
+			header,
+			"import { defineRenders } from '@sumeria/render';",
+			...renderImports,
+			'',
+			'export default defineRenders({',
+			...renderFields,
+			'});',
+			'',
+		],
+
 		'main.ts': [
 			header,
 			"import { start } from '@sumeria/client';",
 			"import game from './manifest.js';",
 			'',
 			'start(game);',
+			'',
+		],
+
+		'render.ts': [
+			header,
+			"import { start } from '@sumeria/render';",
+			"import renders from './renders.js';",
+			'',
+			'start(renders);',
 			'',
 		],
 
@@ -268,9 +297,15 @@ export async function main(argv: string[]): Promise<void> {
 	if (!fs.existsSync(source)) io.exit(`No source directory at ${source}`, 1);
 
 	const entities = io.track('Scanning entities', () => scan(join(source, 'entities'), '.ts'));
+	const renders = io.track('Scanning renderers', () => scan(join(source, 'render'), '.ts'));
 	const shaders = io.track('Scanning shaders', () => scan(join(source, 'shaders'), '.glslx'));
 
-	io.debug(`Found ${entities.length} entities, ${shaders.length} shaders`);
+	io.debug(`Found ${entities.length} entities, ${renders.length} renderers, ${shaders.length} shaders`);
+
+	for (const entity of entities) {
+		if (!renders.some(render => render.name === entity.name))
+			io.warnOnce(`No renderer in ${join(config.source, 'render')} for "${entity.name}"; it will be invisible.`);
+	}
 
 	if (!entities.length) io.warn(`No entities found in ${join(source, 'entities')}`);
 
@@ -284,7 +319,7 @@ export async function main(argv: string[]): Promise<void> {
 	if (controls) io.debug(`Bound ${Object.keys(controls).length} actions`);
 
 	io.track('Generating entry points', () =>
-		generate(join(source, generatedDir), config, entities, shaders, controls)
+		generate(join(source, generatedDir), config, entities, renders, shaders, controls)
 	);
 
 	// Compiles the generated sources along with the game's own.
@@ -303,7 +338,7 @@ export async function main(argv: string[]): Promise<void> {
 		{ out: 'electron.js', entry: fileURLToPath(import.meta.resolve('@sumeria/app')), node: true },
 		{ out: 'server.js', entry: join(compiled, generatedDir, 'server.js'), node: true },
 		{ out: 'main.js', entry: join(compiled, generatedDir, 'main.js') },
-		{ out: 'render.js', entry: fileURLToPath(import.meta.resolve('@sumeria/render/main')) },
+		{ out: 'render.js', entry: join(compiled, generatedDir, 'render.js') },
 	];
 
 	const results = await io.jobs.runWithData(

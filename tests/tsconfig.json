@@ -9,5 +9,5 @@
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"],
-	"references": [{ "path": "../src/core" }, { "path": "../src/server" }]
+	"references": [{ "path": "../src/core" }, { "path": "../src/render" }, { "path": "../src/server" }]
 }

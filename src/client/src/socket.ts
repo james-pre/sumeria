@@ -14,6 +14,7 @@ export function init(port: number): Socket<ServerEvents, ClientEvents> {
 
 	socket.on('welcome', info => {
 		welcome = info;
+		render.setPlayer(info.entity);
 	});
 
 	socket.on('tick', world => {
