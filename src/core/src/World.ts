@@ -1,15 +1,17 @@
 import type { UUID } from 'utilium';
 import type { GameObject } from './object.js';
-import { Entity, type EntitySaveData } from './Entity.js';
+import type { Entity, EntitySaveData } from './Entity.js';
+import { Registry } from './registry.js';
 import { Zone, type ZoneData } from './Zone.js';
 import { EventEmitter } from 'eventemitter3';
 
 export interface WorldData {
 	id: UUID;
-	entities: (EntitySaveData & { $: string })[];
+	entities: EntitySaveData[];
 	zones: ZoneData[];
 	name?: string;
-	timestamp: Temporal.InstantLike;
+	/** ISO 8601 instant, as produced by `Temporal.Instant#toJSON` */
+	timestamp: string;
 }
 
 export class World
@@ -21,6 +23,27 @@ export class World
 	id = crypto.randomUUID();
 	name?: string;
 	lastSave = Temporal.Now.instant();
+
+	/**
+	 * Maps save data back onto the classes that implement it.
+	 * Without the game's manifest, only plain entities can be loaded.
+	 */
+	constructor(public readonly registry: Registry = new Registry()) {
+		super();
+	}
+
+	/** The next zone id, tracked per world so loaded zones can not collide with new ones. */
+	#nextZoneId = 1;
+
+	/** @internal Called by {@link Zone}. */
+	_takeZoneId(): number {
+		return this.#nextZoneId++;
+	}
+
+	/** @internal Called by {@link Zone} when loading, so new zones start above the loaded ones. */
+	_reserveZoneId(id: number): void {
+		if (Number.isSafeInteger(id) && id >= this.#nextZoneId) this.#nextZoneId = id + 1;
+	}
 
 	protected tickRate = 20;
 
@@ -49,22 +72,38 @@ export class World
 		this.name = data.name;
 		this.lastSave = Temporal.Instant.from(data.timestamp);
 
+		const unknown = new Set<string>();
+		for (const { $ } of data.entities) {
+			if (!this.registry.has($)) unknown.add($);
+		}
+
+		if (unknown.size)
+			throw new Error(
+				`Can not load world: unregistered entity ${unknown.size === 1 ? 'type' : 'types'} `
+					+ [...unknown].map(type => `"${type}"`).join(', ')
+			);
+
 		for (const zoneData of data.zones) {
 			const zone = new Zone(this);
 			zone.load(zoneData);
+			zone.init();
 		}
 
 		for (const entityData of data.entities) {
-			const entity = new Entity(this);
+			const Type = this.registry.get(entityData.$)!;
+			const entity = new Type(this);
 			entity.load(entityData);
+			entity.init();
 		}
 	}
 
-	toJSON() {
+	toJSON(): WorldData {
+		this.lastSave = Temporal.Now.instant();
+
 		return {
 			id: this.id,
 			name: this.name,
-			timestamp: this.lastSave,
+			timestamp: this.lastSave.toJSON(),
 			entities: this.entities
 				.values()
 				.map(entity => entity.toJSON())
@@ -77,11 +116,12 @@ export class World
 	}
 
 	dispose(): void {
-		for (const entity of this.entities.values()) {
+		// Snapshot first: disposing removes the object from the map being iterated.
+		for (const entity of [...this.entities.values()]) {
 			entity.dispose();
 		}
 
-		for (const zone of this.zones.values()) {
+		for (const zone of [...this.zones.values()]) {
 			zone.dispose();
 		}
 	}

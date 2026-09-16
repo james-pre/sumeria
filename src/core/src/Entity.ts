@@ -1,11 +1,12 @@
 import type { Tuple, UUID } from 'utilium';
-import type { Component, ComponentsConfig, ComponentsSaveData } from './Component.js';
+import type { Component, ComponentConstructor, ComponentsConfig, ComponentsSaveData } from './Component.js';
 import type { GameObject } from './object.js';
+import type { EntityConstructor } from './registry.js';
 import { Vec3 } from './vectors.js';
 import type { World } from './World.js';
 
 export interface EntitySaveData {
-	/** Entity type */
+	/** Registered entity type id, for example `duck-race:duck` */
 	$: string;
 	id: UUID;
 	position: Tuple<number, 3>;
@@ -20,6 +21,27 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 	protected components = new Set<Component>();
 
 	constructor(public readonly world: World) {}
+
+	/**
+	 * Get one of this entity's components by class.
+	 * @throws If this entity was not built with that component.
+	 */
+	get<T extends Component>(type: ComponentConstructor<T>): T {
+		for (const component of this.components) {
+			if (component instanceof type) return component;
+		}
+
+		throw new Error(`${this.constructor.name} has no ${type.name} component`);
+	}
+
+	/** Whether this entity was built with the given component. */
+	has(type: ComponentConstructor): boolean {
+		for (const component of this.components) {
+			if (component instanceof type) return true;
+		}
+
+		return false;
+	}
 
 	init() {
 		this.world.entities.set(this.id, this);
@@ -39,19 +61,34 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 	}
 
 	load(data: EntitySaveData & SaveData) {
+		// Re-key if this entity was already registered under its generated id.
+		const registered = this.world.entities.get(this.id) === this;
+		if (registered) this.world.entities.delete(this.id);
+
 		this.id = data.id;
 		this.position.data = data.position;
 		this.rotation.data = data.rotation;
+
+		if (registered) this.world.entities.set(this.id, this);
+
 		for (const component of this.components) {
 			component.load(data);
 		}
 	}
 
 	toJSON(): EntitySaveData & SaveData {
+		const type = this.world.registry.typeOf(this.constructor as EntityConstructor);
+
+		if (!type)
+			throw new Error(
+				`Can not save a ${this.constructor.name} because its type is not registered.`
+					+ ' Add it to the `entities` of your game manifest.'
+			);
+
 		const data = Object.create(null);
 
 		Object.assign(data, {
-			$: this.constructor.name,
+			$: type,
 			id: this.id,
 			position: this.position.data,
 			rotation: this.rotation.data,

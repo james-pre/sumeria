@@ -14,6 +14,11 @@ export type ComponentsConfig<T extends (typeof Component<any, any>)[]> = T exten
 		? C & ComponentsConfig<Rest>
 		: never;
 
+/** A component class, as passed to `Entity.WithComponents` or `Entity#get`. */
+export type ComponentConstructor<T extends Component<any, any> = Component<any, any>> = abstract new (
+	...args: any[]
+) => T;
+
 export abstract class Component<
 	SaveData extends object = object,
 	Config extends object = object,
