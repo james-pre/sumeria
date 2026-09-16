@@ -1,5 +1,5 @@
 import type { Tuple, UUID } from 'utilium';
-import type { Component, ComponentsConfig, ComponentsSaveData } from './Component.js';
+import type { Component, ComponentConstructor, ComponentsConfig, ComponentsSaveData } from './Component.js';
 import type { GameObject } from './object.js';
 import { Vec3 } from './vectors.js';
 import type { World } from './World.js';
@@ -21,7 +21,21 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 
 	constructor(public readonly world: World) {}
 
+	/** Get one of this entity's components by class. */
+	get<T extends Component>(type: ComponentConstructor<T>): T | null {
+		for (const component of this.components) {
+			if (component instanceof type) return component;
+		}
+
+		return null;
+	}
+
 	init() {
+		if (this.world.entities.has(this.id) && this.world.entities.get(this.id) !== this)
+			throw new ReferenceError(
+				`Can not initialize entity (${this.constructor.name}) #${this.id} because a different entity already has that ID`
+			);
+
 		this.world.entities.set(this.id, this);
 		for (const component of this.components) {
 			component.init();
@@ -39,9 +53,15 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 	}
 
 	load(data: EntitySaveData & SaveData) {
+		if (this.world.entities.has(this.id))
+			throw new ReferenceError(
+				`Refusing to load entity (${this.constructor.name}) #${this.id} because it has already been initialized`
+			);
+
 		this.id = data.id;
 		this.position.data = data.position;
 		this.rotation.data = data.rotation;
+
 		for (const component of this.components) {
 			component.load(data);
 		}
@@ -107,3 +127,9 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		};
 	}
 }
+
+export interface EntityConstructor<E extends Entity<any> = Entity<any>> {
+	new (world: World): E;
+}
+
+export const entityTypes = new Map<string, EntityConstructor>([['Entity', Entity]]);

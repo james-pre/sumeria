@@ -1,12 +1,13 @@
 import type { UUID } from 'utilium';
 import type { GameObject } from './object.js';
-import { Entity, type EntitySaveData } from './Entity.js';
+import { entityTypes, type Entity, type EntitySaveData } from './Entity.js';
 import { Zone, type ZoneData } from './Zone.js';
 import { EventEmitter } from 'eventemitter3';
+import { error } from 'ioium';
 
 export interface WorldData {
 	id: UUID;
-	entities: (EntitySaveData & { $: string })[];
+	entities: EntitySaveData[];
 	zones: ZoneData[];
 	name?: string;
 	timestamp: Temporal.InstantLike;
@@ -30,8 +31,7 @@ export class World
 	}
 
 	entities = new Map<UUID, Entity>();
-
-	zones = new Map<number, Zone>();
+	zones = new Map<string, Zone>();
 
 	init() {}
 
@@ -50,21 +50,28 @@ export class World
 		this.lastSave = Temporal.Instant.from(data.timestamp);
 
 		for (const zoneData of data.zones) {
-			const zone = new Zone(this);
+			const zone = new Zone(this, zoneData.id);
 			zone.load(zoneData);
+			zone.init();
 		}
 
 		for (const entityData of data.entities) {
-			const entity = new Entity(this);
+			const Type = entityTypes.get(entityData.$);
+			if (!Type) {
+				error(`Can not load entity #${entityData.id} of unknown type "${entityData.$}"`);
+				continue;
+			}
+			const entity = new Type(this);
 			entity.load(entityData);
+			entity.init();
 		}
 	}
 
-	toJSON() {
+	toJSON(): WorldData {
 		return {
 			id: this.id,
 			name: this.name,
-			timestamp: this.lastSave,
+			timestamp: this.lastSave.toJSON(),
 			entities: this.entities
 				.values()
 				.map(entity => entity.toJSON())
@@ -77,11 +84,11 @@ export class World
 	}
 
 	dispose(): void {
-		for (const entity of this.entities.values()) {
+		for (const entity of this.entities.values().toArray()) {
 			entity.dispose();
 		}
 
-		for (const zone of this.zones.values()) {
+		for (const zone of this.zones.values().toArray()) {
 			zone.dispose();
 		}
 	}
