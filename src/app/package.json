@@ -27,8 +27,11 @@
 	"files": [
 		"dist"
 	],
+	"bin": {
+		"sumeria": "dist/build.js"
+	},
 	"scripts": {
-		"build": "tsc"
+		"build": "tsc && chmod +x dist/build.js"
 	},
 	"peerDependencies": {
 		"@sumeria/client": "^0.1.0",
@@ -38,6 +41,8 @@
 	},
 	"dependencies": {
 		"electron": "^44.4.0",
+		"electron-builder": "^27.0.0-alpha.8",
+		"esbuild": "^0.28.2",
 		"ioium": "^1.9.0"
 	}
 }

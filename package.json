@@ -24,7 +24,7 @@
 	"scripts": {
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
-		"build": "tsc -b && cp src/client/src/ui/index.html src/client/dist/index.html",
+		"build": "tsc -b && cp src/client/src/ui/index.html src/client/dist/index.html && chmod +x src/app/dist/build.js",
 		"watch": "mkdir -p src/client/dist && cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b -w",
 		"lint": "tsc -b && eslint src tests",
 		"clean": "rm -rf src/*/dist src/*/tsconfig.tsbuildinfo tests/dist tests/tsconfig.tsbuildinfo",
