@@ -15,7 +15,7 @@ export interface WorldData {
 
 export class World
 	extends EventEmitter<{
-		tick: [];
+		tick: [diff: WorldDiff];
 	}>
 	implements GameObject<WorldData>
 {
@@ -31,15 +31,33 @@ export class World
 	}
 
 	entities = new Map<UUID, Entity>();
+	#lastTickedEntities = new Set<UUID>();
+
 	zones = new Map<string, Zone>();
 
 	init() {}
 
-	tick() {
+	tick(): WorldDiff {
+		const lastTicked = new Set(this.#lastTickedEntities);
+		this.#lastTickedEntities.clear();
+
 		for (const entity of this.entities.values()) {
 			entity.tick();
+			this.#lastTickedEntities.add(entity.id);
 		}
-		this.emit('tick');
+
+		const tickDiff: WorldDiff = {
+			added: Array.from(this.#lastTickedEntities.difference(lastTicked))
+				.map(id => this.entities.get(id)?.toJSON())
+				.filter((v): v is EntitySaveData => !!v),
+			removed: Array.from(lastTicked.difference(this.#lastTickedEntities)),
+			updated: Array.from(this.#lastTickedEntities.intersection(lastTicked))
+				.map(id => this.entities.get(id)?.toJSON())
+				.filter((v): v is EntitySaveData => !!v),
+		};
+
+		this.emit('tick', tickDiff);
+		return tickDiff;
 	}
 
 	load(data: WorldData) {
@@ -110,4 +128,10 @@ export class World
 		clearTimeout(this.#timeout);
 		this.#timeout = undefined;
 	}
+}
+
+export interface WorldDiff {
+	added: EntitySaveData[];
+	updated: EntitySaveData[];
+	removed: UUID[];
 }
