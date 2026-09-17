@@ -1,8 +1,6 @@
-import { init } from './engine.js';
+import { engine, initScene } from './engine.js';
 import type { Incoming } from './rpc.js';
-import { update } from './world.js';
-
-let canvas: OffscreenCanvas;
+import { load, update } from './world.js';
 
 addEventListener('message', event => {
 	if (!event.data) return;
@@ -11,12 +9,14 @@ addEventListener('message', event => {
 
 	switch (data.$) {
 		case 'init':
-			canvas = data.canvas;
-			init(data.canvas);
+			initScene(data.canvas);
+			engine.setSize(data.width, data.height);
 			break;
 		case 'resize':
-			canvas.width = data.width;
-			canvas.height = data.height;
+			engine.setSize(data.width, data.height);
+			break;
+		case 'load':
+			load(data);
 			break;
 		case 'tick':
 			update(data.world);

@@ -10,7 +10,7 @@ export let world: WorldData | null = null;
 /** The entity the camera follows, or null when spectating. */
 export let player: UUID | null = null;
 
-export function loadWorld(from: Welcome) {
+export function load(from: Welcome) {
 	player = from.entity;
 
 	// @todo: dispose existing
