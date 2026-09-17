@@ -1,9 +1,9 @@
 import { app, BrowserWindow } from 'electron';
+import * as io from 'ioium/node';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
-import type { ToServer, FromServer } from './server_thread.js';
-import * as io from 'ioium/node';
+import type { FromServer } from './server_thread.js';
 
 const portMessage = Promise.withResolvers<number>();
 
@@ -19,7 +19,8 @@ const serverThread = new Worker(join(import.meta.dirname, 'server_thread.js'))
 	.on('error', error => {
 		io.error('[Server] Error:', error);
 		portMessage.reject(error);
-	});
+	})
+	.on('exit', code => portMessage.reject(new Error(`[Server] thread exited with code ${code}`)));
 
 app.whenReady()
 	.then(async () => {
