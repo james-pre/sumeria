@@ -1,6 +1,13 @@
+import type { Welcome, WorldDiff } from '@sumeria/core';
 import type * as rpc from '@sumeria/render/rpc';
 
 export let thread: Worker;
+
+/** Backing-store size, so the scene is not soft on a high-DPI display. */
+function size(canvas: HTMLCanvasElement): [width: number, height: number] {
+	const scale = devicePixelRatio || 1;
+	return [Math.round(canvas.clientWidth * scale), Math.round(canvas.clientHeight * scale)];
+}
 
 export function init() {
 	thread = new Worker(new URL('render.js', import.meta.url), { type: 'module' });
@@ -8,23 +15,23 @@ export function init() {
 	const canvas = document.createElement('canvas');
 	canvas.id = 'render';
 	document.body.appendChild(canvas);
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
+
+	// Read once the canvas is in the document; before that it has no layout.
+	const [width, height] = size(canvas);
 	const offscreen = canvas.transferControlToOffscreen();
 
-	thread.postMessage(
-		{
-			$: 'init',
-			canvas: offscreen,
-		} satisfies rpc.Init,
-		[offscreen]
-	);
+	thread.postMessage({ $: 'init', canvas: offscreen, width, height } satisfies rpc.Init, [offscreen]);
 
-	addEventListener('resize', () =>
-		thread.postMessage({
-			$: 'resize',
-			width: canvas.clientWidth,
-			height: canvas.clientHeight,
-		} satisfies rpc.Resize)
-	);
+	addEventListener('resize', () => {
+		const [width, height] = size(canvas);
+		thread.postMessage({ $: 'resize', width, height } satisfies rpc.Resize);
+	});
+}
+
+export function tick(world: WorldDiff) {
+	thread?.postMessage({ $: 'tick', world } satisfies rpc.Tick);
+}
+
+export function load(from: Welcome) {
+	thread?.postMessage({ $: 'load', ...from } satisfies rpc.Load);
 }
