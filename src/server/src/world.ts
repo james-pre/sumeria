@@ -1,10 +1,27 @@
-import { World } from '@sumeria/core';
+import { World, type Entity } from '@sumeria/core';
+import { clients } from './clients.js';
 import { io } from './socket.js';
 
 export const world = new World();
 
-world.on('tick', () => {
-	const data = world.toJSON();
+world.on('tick', diff => {
+	io.emit('tick', diff);
+});
 
-	io.emit('tick', data);
+io.on('connection', socket => {
+	// @todo create a player
+	const entity: Entity | null = null as Entity | null;
+
+	clients.set(socket.id, { id: socket.id, socket, entity });
+
+	socket.emit('welcome', { entity: entity?.id ?? null, world: world.toJSON() });
+
+	socket.on('input', (action, active) => {
+		clients.get(socket.id)?.entity?.input(action, active);
+	});
+
+	socket.on('disconnect', () => {
+		clients.get(socket.id)?.entity?.dispose();
+		clients.delete(socket.id);
+	});
 });
