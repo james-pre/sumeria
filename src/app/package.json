@@ -33,11 +33,11 @@
 	"peerDependencies": {
 		"@sumeria/client": "^0.1.0",
 		"@sumeria/server": "^0.1.0",
+		"electron": "^44.4.0",
 		"utilium": "^3.0.0",
 		"zod": "^4.5.0"
 	},
 	"dependencies": {
-		"electron": "^44.4.0",
 		"ioium": "^1.9.0"
 	}
 }
