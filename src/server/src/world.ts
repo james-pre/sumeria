@@ -1,4 +1,4 @@
-import { World, type Entity } from '@sumeria/core';
+import { playerType, World, type Entity } from '@sumeria/core';
 import { clients } from './clients.js';
 import { io } from './socket.js';
 
@@ -9,8 +9,12 @@ world.on('tick', diff => {
 });
 
 io.on('connection', socket => {
-	// @todo create a player
-	const entity: Entity | null = null as Entity | null;
+	let entity: Entity | null = null;
+
+	if (playerType) {
+		entity = new playerType(world);
+		entity.init();
+	}
 
 	clients.set(socket.id, { id: socket.id, socket, entity });
 

@@ -149,3 +149,15 @@ export interface EntityConstructor<E extends Entity<any> = Entity<any>> {
 }
 
 export const entityTypes = new Map<string, EntityConstructor>([['Entity', Entity]]);
+
+/** Adds entity types to {@link entityTypes} under their class names. */
+export function register(...types: EntityConstructor[]): void {
+	for (const type of types) {
+		const existing = entityTypes.get(type.name);
+
+		if (existing && existing !== type)
+			throw new Error(`Can not register "${type.name}" because a different class already has that name`);
+
+		entityTypes.set(type.name, type);
+	}
+}

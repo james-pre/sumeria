@@ -24,8 +24,8 @@
 	"scripts": {
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
-		"build": "cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b",
-		"watch": "cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b -w",
+		"build": "tsc -b && cp src/client/src/ui/index.html src/client/dist/index.html",
+		"watch": "mkdir -p src/client/dist && cp src/client/src/ui/index.html src/client/dist/index.html && tsc -b -w",
 		"lint": "tsc -b && eslint src",
 		"clean": "rm -rf src/*/dist src/*/tsconfig.tsbuildinfo"
 	},
@@ -44,9 +44,11 @@
 		"eslint": "^10.1.0",
 		"globals": "^17.4.0",
 		"prettier": "^3.2.5",
+		"socket.io-client": "^4.8.3",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "^8.58.0",
-		"utilium": "^3.0.0"
+		"utilium": "^3.0.0",
+		"zod": "^4.6.5"
 	},
 	"prettier": {
 		"singleQuote": true,
@@ -58,6 +60,7 @@
 		"experimentalOperatorPosition": "start"
 	},
 	"allowScripts": {
-		"esbuild": true
+		"esbuild": true,
+		"electron": true
 	}
 }
