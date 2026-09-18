@@ -1,0 +1,18 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": "src",
+		"outDir": "dist",
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../app" },
+		{ "path": "../client" },
+		{ "path": "../core" },
+		{ "path": "../render" },
+		{ "path": "../server" }
+	]
+}

@@ -1,0 +1,54 @@
+{
+	"name": "sumeria",
+	"version": "0.1.0",
+	"description": "The toolchain for making games with the Sumeria game engine",
+	"author": "James Prevett <jp@jamespre.dev> (https://jamespre.dev)",
+	"license": "LGPL-3.0-or-later",
+	"funding": {
+		"type": "individual",
+		"url": "https://github.com/sponsors/james-pre"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/james-pre/sumeria.git",
+		"directory": "src/sdk"
+	},
+	"homepage": "https://github.com/james-pre/sumeria#readme",
+	"bugs": {
+		"url": "https://github.com/james-pre/sumeria/issues"
+	},
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./*": "./dist/*.js"
+	},
+	"bin": {
+		"sumeria": "dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"scripts": {
+		"build": "tsc && chmod +x dist/cli.js"
+	},
+	"dependencies": {
+		"@sumeria/app": "^0.1.0",
+		"@sumeria/client": "^0.1.0",
+		"@sumeria/core": "^0.1.0",
+		"@sumeria/render": "^0.1.0",
+		"@sumeria/server": "^0.1.0",
+		"ioium": "^1.9.0"
+	},
+	"peerDependencies": {
+		"electron": "^44.4.0",
+		"electron-builder": "^27.0.0-alpha.8",
+		"esbuild": "^0.28.2",
+		"utilium": "^3.0.0",
+		"zod": "^4.5.0"
+	}
+}

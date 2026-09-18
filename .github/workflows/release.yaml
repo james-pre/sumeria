@@ -35,12 +35,15 @@ jobs:
               id: resolve
               run: |
                   PACKAGE="$(echo ${{ github.event.release.tag_name }} | sed 's/@.*$//')"
-                  if [ ! -d "packages/$PACKAGE" ]; then
+                  if [ "$PACKAGE" = "sumeria" ]; then
+                      PACKAGE="sdk"
+                  fi
+                  if [ ! -d "src/$PACKAGE" ]; then
                       echo "Package directory not found"
                       exit 1
                   fi
-                  echo "path=packages/$PACKAGE" >> $GITHUB_OUTPUT
-                  echo "::debug::Resolved package to 'packages/$PACKAGE'"
+                  echo "path=src/$PACKAGE" >> $GITHUB_OUTPUT
+                  echo "::debug::Resolved package to 'src/$PACKAGE'"
 
             - name: Build
               run: npx tsc -b

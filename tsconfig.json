@@ -19,6 +19,7 @@
 		{ "path": "./src/client" },
 		{ "path": "./src/core" },
 		{ "path": "./src/render" },
+		{ "path": "./src/sdk" },
 		{ "path": "./src/server" }
 	]
 }
