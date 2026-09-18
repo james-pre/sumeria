@@ -20,6 +20,7 @@ export type FromServer = Listen;
 if (!parentPort) exit('The server thread can not be run on its own!', 2);
 
 server.io.listen(0);
+server.world.start();
 
 parentPort.on('message', (message: ToServer) => {
 	switch (message.$) {

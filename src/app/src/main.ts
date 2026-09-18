@@ -1,35 +1,41 @@
 import { app, BrowserWindow } from 'electron';
 import * as io from 'ioium/node';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
+import { config } from './config.js';
 import type { FromServer } from './server_thread.js';
 
-const portMessage = Promise.withResolvers<number>();
+function pathOf(target: URL | string): string {
+	return typeof target === 'string' ? target : fileURLToPath(target);
+}
 
-const serverThread = new Worker(join(import.meta.dirname, 'server_thread.js'))
-	.on('message', (message: FromServer) => {
-		switch (message.$) {
-			case 'listen':
-				portMessage.resolve(message.port);
-				io.debug('[Server] Listening on port', message.port);
-				break;
-		}
-	})
-	.on('error', error => {
-		io.error('[Server] Error:', error);
-		portMessage.reject(error);
-	})
-	.on('exit', code => portMessage.reject(new Error(`[Server] thread exited with code ${code}`)));
+function startServer(): Promise<number> {
+	const portMessage = Promise.withResolvers<number>();
+
+	new Worker(config.server)
+		.on('message', (message: FromServer) => {
+			switch (message.$) {
+				case 'listen':
+					portMessage.resolve(message.port);
+					io.debug('[Server] Listening on port', message.port);
+					break;
+			}
+		})
+		.on('error', error => {
+			io.error('[Server] Error:', error);
+			portMessage.reject(error);
+		})
+		.on('exit', code => portMessage.reject(new Error(`[Server] thread exited with code ${code}`)));
+
+	return portMessage.promise;
+}
 
 app.whenReady()
 	.then(async () => {
+		const serverPort = await startServer();
 		const window = new BrowserWindow();
-		const serverPort = await portMessage.promise;
 
-		await window.loadFile(fileURLToPath(import.meta.resolve('@sumeria/client/index.html')), {
-			query: { port: serverPort.toString() },
-		});
+		await window.loadFile(pathOf(config.page), { query: { port: serverPort.toString() } });
 	})
 	.catch(error => {
 		io.error(error);
