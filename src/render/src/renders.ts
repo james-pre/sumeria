@@ -1,10 +1,15 @@
 import type { Scene, TransformNode } from '@babylonjs/core';
-import type { ZoneData } from '@sumeria/core';
+import type { EntitySaveData, ZoneData } from '@sumeria/core';
 
-/** Builds the node for one entity type; position and rotation are applied by the engine. */
-export type EntityRenderer = (scene: Scene) => TransformNode;
+/**
+ * Builds the node for one entity; position and rotation are applied by the engine afterwards.
+ * The entity's data is passed so one type can look different per instance.
+ */
+export type EntityRenderer<Data extends EntitySaveData = EntitySaveData> = (scene: Scene, data: Data) => TransformNode;
 
-export const renderers = new Map<string, EntityRenderer>();
+// Renderers narrow the data to their own entity's type, which the map can not track per key.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const renderers = new Map<string, EntityRenderer<any>>();
 
 /** Scene-wide setup, for anything that belongs to the world rather than one entity. */
 export type WorldRenderer = (scene: Scene) => void;

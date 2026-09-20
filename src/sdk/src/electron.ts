@@ -103,6 +103,7 @@ const notPackaged = [
 	'esbuild',
 	'zod',
 	'@babylonjs/core',
+	'@babylonjs/loaders',
 	'@sumeria/client',
 	'@sumeria/render',
 ];

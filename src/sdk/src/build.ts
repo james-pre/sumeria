@@ -4,7 +4,7 @@ import { build, formatMessages } from 'esbuild';
 import * as io from 'ioium/node';
 import * as fs from 'node:fs';
 import { findPackageJSON } from 'node:module';
-import { dirname, extname, join, posix, relative, resolve, sep } from 'node:path';
+import { basename, dirname, extname, join, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GamePackage } from './config.js';
 import { builderConfig, electronMain, type Platform, platforms, targetsFor } from './electron.js';
@@ -84,12 +84,32 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 	const entities = io.track('Scanning entities', () => scan(join(source, 'entities'), '.ts'));
 	const renders = io.track('Scanning renderers', () => scan(join(source, 'render'), '.ts'));
 	const zones = io.track('Scanning zones', () => scan(join(source, 'zones'), '.ts'));
+	const screens = io.track('Scanning screens', () => scan(join(source, 'ui'), '.ts'));
+	const models = io.track('Scanning assets', () => scan(join(source, 'assets')));
 	const shaders = compileShaders(scan(join(source, 'shaders'), '.glslx'));
 
-	const worldSetup = join(source, 'world.ts');
-	const world = fs.existsSync(worldSetup) && specifier(join(source, generatedDir), worldSetup);
+	/** A module the game may or may not have, as a specifier the generated sources can import. */
+	function optional(name: string): string | false {
+		const path = join(source, name);
+		return fs.existsSync(path) && specifier(join(source, generatedDir), path);
+	}
 
-	io.debug('Found', entities.length, 'entities,', renders.length, 'renderers,', shaders.length, 'shaders');
+	const world = optional('world.ts');
+	const logic = optional('game.ts');
+
+	io.debug(
+		'Found',
+		entities.length,
+		'entities,',
+		renders.length,
+		'renderers,',
+		shaders.length,
+		'shaders,',
+		screens.length,
+		'screens,',
+		models.length,
+		'assets'
+	);
 
 	if (!entities.length) io.warn('No entities found in', join(source, 'entities'));
 
@@ -112,8 +132,11 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 			renders,
 			shaders,
 			shaderData: specifier(join(compiled, generatedDir), join(source, generatedDir, 'shaders.json')),
+			assets: models.map(model => basename(model.path)),
+			ui: screens,
 			zones,
 			world,
+			game: logic,
 			controls,
 		})
 	);
@@ -140,6 +163,10 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 	io.track('Copying the page', () =>
 		fs.copyFileSync(fileURLToPath(import.meta.resolve('@sumeria/client/index.html')), join(out, 'index.html'))
 	);
+
+	// Next to the render bundle, which is what its `import.meta.url` resolves them against.
+	if (models.length)
+		io.track('Copying assets', () => fs.cpSync(join(source, 'assets'), join(out, 'assets'), { recursive: true }));
 
 	let icon: string | null = null;
 

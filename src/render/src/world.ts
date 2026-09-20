@@ -2,6 +2,7 @@ import { TargetCamera } from '@babylonjs/core';
 import type { EntitySaveData, Welcome, WorldData, WorldDiff } from '@sumeria/core';
 import { warn, warnOnce } from 'ioium';
 import type { UUID } from 'utilium';
+import { loadAssets } from './assets.js';
 import { scene } from './engine.js';
 import { EntityRender, entities } from './entity.js';
 import { renderers, worldRenderers, zoneRenderers } from './renders.js';
@@ -22,7 +23,7 @@ function add(entity: EntitySaveData) {
 		return;
 	}
 
-	const node = renderer(scene);
+	const node = renderer(scene, entity);
 	node.id = entity.id;
 	entities.set(entity.id, new EntityRender(node, entity));
 
@@ -32,12 +33,16 @@ function add(entity: EntitySaveData) {
 		if (!found) throw new Error(`The renderer for "${entity.$}" is the player's but has no TargetCamera`);
 
 		camera = found;
+		scene.activeCamera = camera;
 	}
 }
 
-export function load(from: Welcome) {
+/** Async only because of the assets; nothing is built until every model is in memory. */
+export async function load(from: Welcome) {
 	for (const entity of entities.values()) entity.dispose();
 	entities.clear();
+
+	await loadAssets(scene);
 
 	player = from.entity;
 	world = from.world;
@@ -75,6 +80,8 @@ export function update(data: WorldDiff) {
 		entities.get(entity.id)?.update(entity);
 	}
 
+	world.state = data.state;
+
 	for (const id of data.removed) {
 		const index = world.entities.findIndex(e => e.id === id);
 		if (index === -1) warn('renderer: Removed entity does not exist in the current world data');
@@ -83,9 +90,13 @@ export function update(data: WorldDiff) {
 		entities.delete(id);
 	}
 
-	if (!player) return;
+	if (!player || !camera) return;
+
+	// A camera parented into the player's tree already rides along, and Babylon reads its
+	// target in the parent's space, so the renderer's own local target is the right one to keep.
+	if (camera.parent) return;
 
 	const followed = entities.get(player);
 
-	if (followed && camera) camera.target.copyFrom(followed.node.position);
+	if (followed) camera.target.copyFrom(followed.node.position);
 }

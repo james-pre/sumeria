@@ -14,15 +14,18 @@ export interface Found {
 	path: string;
 }
 
-export function scan(dir: string, ext: string): Found[] {
+/** Files directly in `dir`, filtered by extension when one is given. */
+export function scan(dir: string, ext?: string): Found[] {
 	if (!fs.existsSync(dir)) return [];
 
 	const found: Found[] = [];
 
 	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isFile() || extname(entry.name) !== ext) continue;
+		if (!entry.isFile()) continue;
 
-		found.push({ name: basename(entry.name, ext), path: join(dir, entry.name) });
+		if (ext !== undefined && extname(entry.name) !== ext) continue;
+
+		found.push({ name: basename(entry.name, ext ?? extname(entry.name)), path: join(dir, entry.name) });
 	}
 
 	return found.sort((a, b) => a.name.localeCompare(b.name));
@@ -43,9 +46,14 @@ interface Generated {
 	shaders: Shader[];
 	/** Specifier for the compiled GLSL, which resolves the same from source and compiled trees. */
 	shaderData: string;
+	/** Model file names, as they are copied next to the render bundle. */
+	assets: string[];
+	ui: Found[];
 	zones: Found[];
 	/** Specifier for the world setup module, or false when the game has none. */
 	world?: string | false;
+	/** Specifier for the server-side game logic, or false when the game has none. */
+	game?: string | false;
 	controls?: string | false;
 }
 
@@ -69,33 +77,46 @@ export function generate(gen: Generated): void {
 
 		'renders.ts': [
 			header,
-			"import { renderers, shaders, worldRenderers, zoneRenderers } from '@sumeria/render';",
+			"import { assetFiles, renderers, shaders, worldRenderers, zoneRenderers } from '@sumeria/render';",
 			`import sources from '${gen.shaderData}' with { type: 'json' };`,
 			...gen.renders.map(r => `import { ${r.name} } from '${specifier(gen.dir, r.path)}';`),
 			...gen.zones.map(z => `import { ${z.name} } from '${specifier(gen.dir, z.path)}';`),
-			...(gen.world ? [`import world from '${gen.world}';`] : []),
+			...(gen.world ? [`import $world from '${gen.world}';`] : []),
 			'',
 			...gen.renders.map(r => `renderers.set(${JSON.stringify(r.name)}, ${r.name});`),
 			...gen.zones.map(z => `zoneRenderers.set(${JSON.stringify(z.name)}, ${z.name});`),
-			...(gen.world ? ['worldRenderers.add(world);'] : []),
+			...(gen.world ? ['worldRenderers.add($world);'] : []),
 			'',
+			`for (const file of ${JSON.stringify(gen.assets)}) assetFiles.add(file);`,
 			'for (const [name, source] of Object.entries(sources)) shaders.set(name, source);',
 			'',
 		],
 
 		'client.ts': [
 			header,
-			"import { input } from '@sumeria/client';",
+			"import { input, ui } from '@sumeria/client';",
 			"import '@sumeria/client/main';",
 			`import controls from '${gen.controls}' with { type: 'json' };`,
+			...gen.ui.map(s => `import $${s.name} from '${specifier(gen.dir, s.path)}';`),
 			'',
 			'input.bind(controls);',
+			...(gen.ui.length ? [`ui.add(${gen.ui.map(s => '$' + s.name).join(', ')});`] : []),
 			'',
 		],
 
 		'render.ts': [header, "import './renders.js';", "import '@sumeria/render/main';", ''],
 
-		'server.ts': [header, "import './entities.js';", "import '@sumeria/app/server_thread';", ''],
+		// The app is imported dynamically because it starts the world as it evaluates,
+		// and a static import would hoist that above the registration below it.
+		'server.ts': [
+			header,
+			"import './entities.js';",
+			...(gen.game ? ["import { setGame } from '@sumeria/core';", `import $game from '${gen.game}';`] : []),
+			'',
+			...(gen.game ? ['setGame($game);', ''] : []),
+			"await import('@sumeria/app/server_thread');",
+			'',
+		],
 	};
 
 	for (const [name, lines] of Object.entries(files)) {
