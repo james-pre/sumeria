@@ -28,7 +28,12 @@ const serverThread = new Worker(join(app.getAppPath(), 'dist/generated/server.js
 
 app.whenReady()
 	.then(async () => {
-		const window = new BrowserWindow();
+		// `productName` from the game's package.json, which Electron prefers over `name`.
+		const window = new BrowserWindow({ title: app.getName() });
+
+		// The page is the engine's and shared by every game, so it has no name to offer.
+		window.on('page-title-updated', event => event.preventDefault());
+
 		const serverPort = await portMessage.promise;
 
 		await window.loadFile(join(app.getAppPath(), 'build/index.html'), { query: { port: serverPort.toString() } });

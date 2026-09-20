@@ -12,6 +12,24 @@ export let player: UUID | null = null;
 
 export const entities = new Map<UUID, EntitySaveData>();
 
+export type Listener = () => void;
+
+const listeners = new Set<Listener>();
+
+/**
+ * Runs whenever the world changes, which is how client-side game logic reacts to the
+ * server without polling. Returns a function that removes the listener again.
+ */
+export function listen(listener: Listener): () => void {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
+}
+
+/** Called by the socket once the mirror is up to date, before the interface redraws. */
+export function changed(): void {
+	for (const listener of listeners) listener();
+}
+
 /** The controlled entity's latest data, which is what a HUD is almost always after. */
 export function self(): EntitySaveData | null {
 	return player ? (entities.get(player) ?? null) : null;

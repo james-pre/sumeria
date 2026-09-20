@@ -24,18 +24,21 @@ export function init(port: number): Socket<ServerEvents, ClientEvents> {
 		welcome = info;
 		world.load(info);
 		render.load(info);
+		world.changed();
 		ui.update();
 	});
 
 	socket.on('tick', diff => {
 		world.update(diff);
 		render.tick(diff);
+		world.changed();
 		ui.update();
 	});
 
 	socket.on('disconnect', reason => {
 		welcome = null;
 		world.reset();
+		world.changed();
 		ui.update();
 		console.warn('[socket] disconnected:', reason);
 	});

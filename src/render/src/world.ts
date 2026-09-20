@@ -1,4 +1,4 @@
-import { TargetCamera } from '@babylonjs/core';
+import { TargetCamera, type TransformNode } from '@babylonjs/core';
 import type { EntitySaveData, Welcome, WorldData, WorldDiff } from '@sumeria/core';
 import { warn, warnOnce } from 'ioium';
 import type { UUID } from 'utilium';
@@ -13,6 +13,22 @@ export let world: WorldData | null = null;
 export let player: UUID | null = null;
 
 export let camera: TargetCamera;
+
+/** The zone being drawn, which is whichever one the player is in. */
+export let zone: string | null = null;
+
+/** What the current zone's renderer built, disposed on the way out. */
+let zoneNode: TransformNode | null = null;
+
+/** An entity is drawn in its own zone, and one with no zone is drawn in all of them. */
+function inZone(entity: EntitySaveData): boolean {
+	return !zone || !entity.zone || entity.zone === zone;
+}
+
+function zoneOf(id: UUID | null): string | null {
+	if (!id) return null;
+	return world?.entities.find(entity => entity.id === id)?.zone || null;
+}
 
 /** Builds an entity's node, claiming the camera out of it when the entity is the player. */
 function add(entity: EntitySaveData) {
@@ -37,10 +53,34 @@ function add(entity: EntitySaveData) {
 	}
 }
 
-/** Async only because of the assets; nothing is built until every model is in memory. */
-export async function load(from: Welcome) {
+/** Swaps the set dressing over, leaving the entities to whoever called. */
+function enter(next: string | null) {
+	zone = next;
+
+	zoneNode?.dispose(false, true);
+	zoneNode = null;
+
+	if (!zone) return;
+
+	const renderer = zoneRenderers.get(zone);
+
+	if (!renderer) {
+		warnOnce(`No renderer for zone "${zone}"`);
+		return;
+	}
+
+	zoneNode = renderer(scene, world?.zones.find(data => data.id === zone) ?? { id: zone });
+}
+
+/** Tears down every entity node, so the scene can be built again from world data. */
+function clear() {
 	for (const entity of entities.values()) entity.dispose();
 	entities.clear();
+}
+
+/** Async only because of the assets; nothing is built until every model is in memory. */
+export async function load(from: Welcome) {
+	clear();
 
 	await loadAssets(scene);
 
@@ -49,14 +89,11 @@ export async function load(from: Welcome) {
 
 	for (const setup of worldRenderers) setup(scene);
 
-	for (const zone of world.zones) {
-		const renderer = zoneRenderers.get(zone.id);
+	enter(zoneOf(player));
 
-		if (!renderer) warnOnce(`No renderer for zone "${zone.id}"`);
-		else renderer(scene, zone);
+	for (const entity of world.entities) {
+		if (inZone(entity)) add(entity);
 	}
-
-	for (const entity of world.entities) add(entity);
 }
 
 export function update(data: WorldDiff) {
@@ -67,7 +104,7 @@ export function update(data: WorldDiff) {
 
 	for (const entity of data.added) {
 		world.entities.push(entity);
-		add(entity);
+		if (inZone(entity)) add(entity);
 	}
 
 	for (const entity of data.updated) {
@@ -77,10 +114,7 @@ export function update(data: WorldDiff) {
 			continue;
 		}
 		Object.assign(existing, entity);
-		entities.get(entity.id)?.update(entity);
 	}
-
-	world.state = data.state;
 
 	for (const id of data.removed) {
 		const index = world.entities.findIndex(e => e.id === id);
@@ -88,6 +122,36 @@ export function update(data: WorldDiff) {
 		else world.entities.splice(index, 1);
 		entities.get(id)?.dispose();
 		entities.delete(id);
+	}
+
+	world.state = data.state;
+
+	// The player moving zones changes what the whole scene is, so it is rebuilt from scratch.
+	const next = zoneOf(player);
+
+	if (next !== zone) {
+		clear();
+		enter(next);
+
+		for (const entity of world.entities) {
+			if (inZone(entity)) add(entity);
+		}
+
+		return;
+	}
+
+	// Anything else that changed zones this tick only has to appear or disappear.
+	for (const entity of data.updated) {
+		const render = entities.get(entity.id);
+
+		if (!inZone(entity)) {
+			render?.dispose();
+			entities.delete(entity.id);
+			continue;
+		}
+
+		if (render) render.update(entity);
+		else add(entity);
 	}
 
 	if (!player || !camera) return;

@@ -17,9 +17,13 @@ export type WorldRenderer = (scene: Scene) => void;
 /** Each runs once per world load, before any entity is built. */
 export const worldRenderers = new Set<WorldRenderer>();
 
-export type ZoneRenderer = (scene: Scene, zone: ZoneData) => void;
+/**
+ * Builds the fixed set dressing for one zone. Whatever it returns is disposed when the
+ * player leaves, so a zone can be as heavy as it likes without leaking into the next one.
+ */
+export type ZoneRenderer = (scene: Scene, zone: ZoneData) => TransformNode;
 
-/** Runs once per zone in a loaded world, keyed by zone id. */
+/** Runs when the player enters a zone, keyed by zone id. */
 export const zoneRenderers = new Map<string, ZoneRenderer>();
 
 export interface ShaderSource {

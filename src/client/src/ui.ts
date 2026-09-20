@@ -169,6 +169,10 @@ export function add(...screens: Screen[]): void {
 	}
 }
 
+export function has(name: string): boolean {
+	return mounted.has(name);
+}
+
 function find(name: string): Mounted {
 	const found = mounted.get(name);
 	if (!found) throw new Error(`There is no screen named "${name}"`);
