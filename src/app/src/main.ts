@@ -1,13 +1,17 @@
 import { app, BrowserWindow } from 'electron';
 import * as io from 'ioium/node';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import type { FromServer } from './server_thread.js';
 
+// Electron forwards renderer console messages to stdout, which throws once the pipe reading them has closed.
+process.stdout.on('error', error => {
+	if (!process.stderr.destroyed && process.stderr.writable) io.error('[stdout]', error);
+});
+
 const portMessage = Promise.withResolvers<number>();
 
-const serverThread = new Worker(join(import.meta.dirname, 'server_thread.js'))
+const serverThread = new Worker(join(app.getAppPath(), 'dist/generated/server.js'))
 	.on('message', (message: FromServer) => {
 		switch (message.$) {
 			case 'listen':
@@ -27,9 +31,7 @@ app.whenReady()
 		const window = new BrowserWindow();
 		const serverPort = await portMessage.promise;
 
-		await window.loadFile(fileURLToPath(import.meta.resolve('@sumeria/client/index.html')), {
-			query: { port: serverPort.toString() },
-		});
+		await window.loadFile(join(app.getAppPath(), 'build/index.html'), { query: { port: serverPort.toString() } });
 	})
 	.catch(error => {
 		io.error(error);
