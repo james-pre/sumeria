@@ -1,6 +1,6 @@
-import { Engine, Scene, type TargetCamera } from '@babylonjs/core';
+import { Engine, Scene } from '@babylonjs/core';
 
-export let engine: Engine, scene: Scene, camera: TargetCamera;
+export let engine: Engine, scene: Scene;
 
 export function initScene(canvas: OffscreenCanvas) {
 	// A worker has no audio context.

@@ -1,21 +1,57 @@
-import type { Welcome, WorldData, WorldDiff } from '@sumeria/core';
+import { TargetCamera } from '@babylonjs/core';
+import type { EntitySaveData, Welcome, WorldData, WorldDiff } from '@sumeria/core';
 import { warn, warnOnce } from 'ioium';
 import type { UUID } from 'utilium';
-import { camera, scene } from './engine.js';
+import { scene } from './engine.js';
 import { EntityRender, entities } from './entity.js';
-import { renderers } from './renders.js';
+import { renderers, worldRenderers, zoneRenderers } from './renders.js';
 
 export let world: WorldData | null = null;
 
 /** The entity the camera follows, or null when spectating. */
 export let player: UUID | null = null;
 
+export let camera: TargetCamera;
+
+/** Builds an entity's node, claiming the camera out of it when the entity is the player. */
+function add(entity: EntitySaveData) {
+	const renderer = renderers.get(entity.$);
+
+	if (!renderer) {
+		warnOnce(`No renderer for "${entity.$}"; it will be invisible`);
+		return;
+	}
+
+	const node = renderer(scene);
+	node.id = entity.id;
+	entities.set(entity.id, new EntityRender(node, entity));
+
+	if (entity.id === player) {
+		const [found] = node.getDescendants(false, child => child instanceof TargetCamera);
+
+		if (!found) throw new Error(`The renderer for "${entity.$}" is the player's but has no TargetCamera`);
+
+		camera = found;
+	}
+}
+
 export function load(from: Welcome) {
+	for (const entity of entities.values()) entity.dispose();
+	entities.clear();
+
 	player = from.entity;
-
-	// @todo: dispose existing
-
 	world = from.world;
+
+	for (const setup of worldRenderers) setup(scene);
+
+	for (const zone of world.zones) {
+		const renderer = zoneRenderers.get(zone.id);
+
+		if (!renderer) warnOnce(`No renderer for zone "${zone.id}"`);
+		else renderer(scene, zone);
+	}
+
+	for (const entity of world.entities) add(entity);
 }
 
 export function update(data: WorldDiff) {
@@ -26,16 +62,7 @@ export function update(data: WorldDiff) {
 
 	for (const entity of data.added) {
 		world.entities.push(entity);
-		const renderer = renderers.get(entity.$);
-
-		if (!renderer) {
-			warnOnce(`No renderer for "${entity.$}"; it will be invisible`);
-			continue;
-		}
-
-		const node = renderer(scene);
-		node.id = entity.id;
-		entities.set(entity.id, new EntityRender(node, entity));
+		add(entity);
 	}
 
 	for (const entity of data.updated) {
