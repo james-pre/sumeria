@@ -44,9 +44,12 @@ let layer: HTMLElement | null = null;
 /**
  * Enough of a kit that a game's screens are mostly markup:
  * a centred panel, buttons, and a labelled bar.
+ *
+ * Layout and theme rules are wrapped in `:where()` so they carry no specificity at all,
+ * and a screen can override any of them with a plain `#its-name` rule.
  */
 const baseStyles = `
-#ui {
+:where(#ui) {
 	position: fixed;
 	inset: 0;
 	pointer-events: none;
@@ -55,7 +58,7 @@ const baseStyles = `
 	z-index: 1;
 }
 
-#ui .screen {
+:where(#ui .screen) {
 	position: absolute;
 	inset: 0;
 	pointer-events: auto;
@@ -64,15 +67,16 @@ const baseStyles = `
 	justify-content: center;
 }
 
-#ui .screen.passive {
+:where(#ui .screen.passive) {
 	pointer-events: none;
 }
 
+/* Not in :where(), because hiding a screen has to beat a screen's own display rule. */
 #ui .screen[hidden] {
 	display: none;
 }
 
-#ui .panel {
+:where(#ui .panel) {
 	background: #1b1f24d8;
 	border: 1px solid #ffffff22;
 	border-radius: 12px;
@@ -82,17 +86,17 @@ const baseStyles = `
 	box-shadow: 0 1.5rem 3rem #0006;
 }
 
-#ui .panel h1 {
+:where(#ui .panel h1) {
 	margin: 0 0 0.25rem;
 	font-size: 2.5rem;
 }
 
-#ui .panel p {
+:where(#ui .panel p) {
 	margin: 0.25rem 0 1.25rem;
 	color: #b9c2cc;
 }
 
-#ui button {
+:where(#ui button) {
 	font: inherit;
 	font-weight: 600;
 	color: #11151a;
@@ -103,17 +107,17 @@ const baseStyles = `
 	cursor: pointer;
 }
 
-#ui button:hover {
+:where(#ui button:hover) {
 	background: #ffc75a;
 }
 
-#ui button:disabled {
+:where(#ui button:disabled) {
 	background: #6b7280;
 	color: #d1d5db;
 	cursor: default;
 }
 
-#ui .bar {
+:where(#ui .bar) {
 	height: 0.75rem;
 	border-radius: 999px;
 	background: #00000066;
@@ -121,7 +125,7 @@ const baseStyles = `
 	overflow: hidden;
 }
 
-#ui .bar > .fill {
+:where(#ui .bar > .fill) {
 	height: 100%;
 	width: 0;
 	background: #7ddf64;

@@ -15,6 +15,8 @@ export function initScene(canvas: OffscreenCanvas) {
 	scene = new Scene(engine);
 
 	engine.runRenderLoop(() => {
+		if (!scene.activeCamera) return;
+
 		scene.render();
 	});
 }
