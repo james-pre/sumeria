@@ -43,6 +43,7 @@
 		"@sumeria/render": "^0.1.0",
 		"@sumeria/server": "^0.1.0",
 		"commander": "^15.0.0",
+		"glslx": "^0.4.5",
 		"ioium": "^1.9.0"
 	},
 	"peerDependencies": {

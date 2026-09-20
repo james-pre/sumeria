@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { GamePackage } from './config.js';
 import { builderConfig, electronMain, type Platform, platforms, targetsFor } from './electron.js';
 import { generate, generatedDir, scan, specifier } from './generate.js';
+import { compileShaders } from './shaders.js';
 
 const shared = ['@babylonjs/core'];
 
@@ -82,8 +83,8 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 
 	const entities = io.track('Scanning entities', () => scan(join(source, 'entities'), '.ts'));
 	const renders = io.track('Scanning renderers', () => scan(join(source, 'render'), '.ts'));
-	const shaders = io.track('Scanning shaders', () => scan(join(source, 'shaders'), '.glslx'));
 	const zones = io.track('Scanning zones', () => scan(join(source, 'zones'), '.ts'));
+	const shaders = compileShaders(scan(join(source, 'shaders'), '.glslx'));
 
 	const worldSetup = join(source, 'world.ts');
 	const world = fs.existsSync(worldSetup) && specifier(join(source, generatedDir), worldSetup);
@@ -110,6 +111,7 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 			entities,
 			renders,
 			shaders,
+			shaderData: specifier(join(compiled, generatedDir), join(source, generatedDir, 'shaders.json')),
 			zones,
 			world,
 			controls,

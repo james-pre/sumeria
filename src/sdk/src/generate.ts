@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import { basename, extname, join, relative, sep } from 'node:path';
+import type { Shader } from './shaders.js';
 
 /**
  * Generated sources live in the source tree so the game's own tsconfig compiles them.
@@ -7,7 +8,7 @@ import { basename, extname, join, relative, sep } from 'node:path';
  */
 export const generatedDir = 'generated';
 
-interface Found {
+export interface Found {
 	/** The file's base name, which is both the export name and the type name. */
 	name: string;
 	path: string;
@@ -39,42 +40,46 @@ interface Generated {
 	dir: string;
 	entities: Found[];
 	renders: Found[];
-	shaders: Found[];
+	shaders: Shader[];
+	/** Specifier for the compiled GLSL, which resolves the same from source and compiled trees. */
+	shaderData: string;
 	zones: Found[];
 	/** Specifier for the world setup module, or false when the game has none. */
 	world?: string | false;
 	controls?: string | false;
 }
 
-export function generate({ dir, entities, renders, shaders, zones, world, controls }: Generated): void {
-	fs.rmSync(dir, { recursive: true, force: true });
-	fs.mkdirSync(dir, { recursive: true });
+export function generate(gen: Generated): void {
+	fs.rmSync(gen.dir, { recursive: true, force: true });
+	fs.mkdirSync(gen.dir, { recursive: true });
 
-	const shaderEntries = shaders.map(
-		s => `shaders.set(${JSON.stringify(s.name)}, ${JSON.stringify(fs.readFileSync(s.path, 'utf8'))});`
-	);
+	const sources = Object.fromEntries(gen.shaders.map(s => [s.name, { vertex: s.vertex, fragment: s.fragment }]));
 
 	const files: Record<string, string[]> = {
+		'shaders.json': [JSON.stringify(sources, null, '\t'), ''],
+
 		'entities.ts': [
 			header,
 			"import { register } from '@sumeria/core';",
-			...entities.map(e => `import { ${e.name} } from '${specifier(dir, e.path)}';`),
+			...gen.entities.map(e => `import { ${e.name} } from '${specifier(gen.dir, e.path)}';`),
 			'',
-			`register(${entities.map(e => e.name).join(', ')});`,
+			`register(${gen.entities.map(e => e.name).join(', ')});`,
 			'',
 		],
 
 		'renders.ts': [
 			header,
 			"import { renderers, shaders, worldRenderers, zoneRenderers } from '@sumeria/render';",
-			...renders.map(r => `import { ${r.name} } from '${specifier(dir, r.path)}';`),
-			...zones.map(z => `import { ${z.name} } from '${specifier(dir, z.path)}';`),
-			...(world ? [`import world from '${world}';`] : []),
+			`import sources from '${gen.shaderData}' with { type: 'json' };`,
+			...gen.renders.map(r => `import { ${r.name} } from '${specifier(gen.dir, r.path)}';`),
+			...gen.zones.map(z => `import { ${z.name} } from '${specifier(gen.dir, z.path)}';`),
+			...(gen.world ? [`import world from '${gen.world}';`] : []),
 			'',
-			...renders.map(r => `renderers.set(${JSON.stringify(r.name)}, ${r.name});`),
-			...zones.map(z => `zoneRenderers.set(${JSON.stringify(z.name)}, ${z.name});`),
-			...(world ? ['worldRenderers.add(world);'] : []),
-			...shaderEntries,
+			...gen.renders.map(r => `renderers.set(${JSON.stringify(r.name)}, ${r.name});`),
+			...gen.zones.map(z => `zoneRenderers.set(${JSON.stringify(z.name)}, ${z.name});`),
+			...(gen.world ? ['worldRenderers.add(world);'] : []),
+			'',
+			'for (const [name, source] of Object.entries(sources)) shaders.set(name, source);',
 			'',
 		],
 
@@ -82,7 +87,7 @@ export function generate({ dir, entities, renders, shaders, zones, world, contro
 			header,
 			"import { input } from '@sumeria/client';",
 			"import '@sumeria/client/main';",
-			`import controls from '${controls}' with { type: 'json' };`,
+			`import controls from '${gen.controls}' with { type: 'json' };`,
 			'',
 			'input.bind(controls);',
 			'',
@@ -94,6 +99,6 @@ export function generate({ dir, entities, renders, shaders, zones, world, contro
 	};
 
 	for (const [name, lines] of Object.entries(files)) {
-		fs.writeFileSync(join(dir, name), lines.join('\n'));
+		fs.writeFileSync(join(gen.dir, name), lines.join('\n'));
 	}
 }

@@ -17,4 +17,9 @@ export type ZoneRenderer = (scene: Scene, zone: ZoneData) => void;
 /** Runs once per zone in a loaded world, keyed by zone id. */
 export const zoneRenderers = new Map<string, ZoneRenderer>();
 
-export const shaders = new Map<string, string>();
+export interface ShaderSource {
+	vertex: string;
+	fragment: string;
+}
+
+export const shaders = new Map<string, ShaderSource>();
