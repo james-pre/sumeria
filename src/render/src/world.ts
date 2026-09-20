@@ -1,6 +1,6 @@
 import { TargetCamera, type TransformNode } from '@babylonjs/core';
 import type { EntitySaveData, Welcome, WorldData, WorldDiff } from '@sumeria/core';
-import { warn, warnOnce } from 'ioium';
+import { debug, warn, warnOnce } from 'ioium';
 import type { UUID } from 'utilium';
 import { loadAssets } from './assets.js';
 import { scene } from './engine.js';
@@ -65,7 +65,7 @@ function enter(next: string | null) {
 	const renderer = zoneRenderers.get(zone);
 
 	if (!renderer) {
-		warnOnce(`No renderer for zone "${zone}"`);
+		debug(`renderer: zone "${zone}" has no renderer`);
 		return;
 	}
 
