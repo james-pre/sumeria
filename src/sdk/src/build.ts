@@ -84,6 +84,7 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 	const entities = io.track('Scanning entities', () => scan(join(source, 'entities'), '.ts'));
 	const renders = io.track('Scanning renderers', () => scan(join(source, 'render'), '.ts'));
 	const zones = io.track('Scanning zones', () => scan(join(source, 'zones'), '.ts'));
+	const screens = io.track('Scanning screens', () => scan(join(source, 'ui'), '.ts'));
 	const models = io.track('Scanning assets', () => scan(join(source, 'assets')));
 	const shaders = compileShaders(scan(join(source, 'shaders'), '.glslx'));
 
@@ -104,6 +105,8 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 		'renderers,',
 		shaders.length,
 		'shaders,',
+		screens.length,
+		'screens,',
 		models.length,
 		'assets'
 	);
@@ -130,6 +133,7 @@ export async function assemble({ project, dev, skipCompile }: AssembleOptions): 
 			shaders,
 			shaderData: specifier(join(compiled, generatedDir), join(source, generatedDir, 'shaders.json')),
 			assets: models.map(model => basename(model.path)),
+			ui: screens,
 			zones,
 			world,
 			game: logic,

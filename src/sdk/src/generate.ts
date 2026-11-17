@@ -48,6 +48,7 @@ interface Generated {
 	shaderData: string;
 	/** Model file names, as they are copied next to the render bundle. */
 	assets: string[];
+	ui: Found[];
 	zones: Found[];
 	/** Specifier for the world setup module, or false when the game has none. */
 	world?: string | false;
@@ -93,11 +94,13 @@ export function generate(gen: Generated): void {
 
 		'client.ts': [
 			header,
-			"import { input } from '@sumeria/client';",
+			"import { input, ui } from '@sumeria/client';",
 			"import '@sumeria/client/main';",
 			`import controls from '${gen.controls}' with { type: 'json' };`,
+			...gen.ui.map(s => `import $${s.name} from '${specifier(gen.dir, s.path)}';`),
 			'',
 			'input.bind(controls);',
+			...(gen.ui.length ? [`ui.add(${gen.ui.map(s => '$' + s.name).join(', ')});`] : []),
 			'',
 		],
 

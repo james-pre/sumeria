@@ -1,6 +1,7 @@
 import type { ClientEvents, ServerEvents, Welcome } from '@sumeria/core';
 import { io as connect, type Socket } from 'socket.io-client';
 import * as render from './render_thread.js';
+import * as ui from './ui.js';
 import * as world from './world.js';
 
 export let socket: Socket<ServerEvents, ClientEvents>;
@@ -24,18 +25,21 @@ export function init(port: number): Socket<ServerEvents, ClientEvents> {
 		world.load(info);
 		render.load(info);
 		world.changed();
+		ui.update();
 	});
 
 	socket.on('tick', diff => {
 		world.update(diff);
 		render.tick(diff);
 		world.changed();
+		ui.update();
 	});
 
 	socket.on('disconnect', reason => {
 		welcome = null;
 		world.reset();
 		world.changed();
+		ui.update();
 		console.warn('[socket] disconnected:', reason);
 	});
 
