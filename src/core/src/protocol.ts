@@ -10,6 +10,8 @@ export interface Welcome {
 
 export interface ClientEvents {
 	input(action: string, active: boolean): void;
+	/** A one-off request from the UI, handled by the game rather than an entity. */
+	command(name: string): void;
 }
 
 export interface ServerEvents {
