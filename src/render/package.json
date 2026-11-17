@@ -32,6 +32,7 @@
 	},
 	"peerDependencies": {
 		"@babylonjs/core": "^9.0.0",
+		"@babylonjs/loaders": "^9.0.0",
 		"@sumeria/core": "^0.1.0",
 		"utilium": "^3.0.0"
 	},

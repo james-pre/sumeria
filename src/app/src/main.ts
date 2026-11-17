@@ -28,7 +28,10 @@ const serverThread = new Worker(join(app.getAppPath(), 'dist/generated/server.js
 
 app.whenReady()
 	.then(async () => {
-		const window = new BrowserWindow();
+		const window = new BrowserWindow({ title: app.getName() });
+
+		window.on('page-title-updated', event => event.preventDefault());
+
 		const serverPort = await portMessage.promise;
 
 		await window.loadFile(join(app.getAppPath(), 'build/index.html'), { query: { port: serverPort.toString() } });

@@ -10,12 +10,20 @@ export interface EntitySaveData {
 	id: UUID;
 	position: Tuple<number, 3>;
 	rotation: Tuple<number, 3>;
+	/** The zone this entity is in, or empty for one that belongs to every zone. */
+	zone: string;
 }
 
 export class Entity<SaveData extends object = {}> implements GameObject<EntitySaveData & SaveData> {
 	public id = crypto.randomUUID();
 	public readonly position = new Vec3();
 	public readonly rotation = new Vec3();
+
+	/**
+	 * Which {@link Zone} this entity is in. Only the zone the player is in gets drawn,
+	 * and an entity left in the empty zone is drawn whichever one that is.
+	 */
+	public zone = '';
 
 	protected components = new Set<Component>();
 
@@ -76,6 +84,7 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 		this.id = data.id;
 		this.position.data = data.position;
 		this.rotation.data = data.rotation;
+		this.zone = data.zone ?? '';
 
 		for (const component of this.components) {
 			component.load(data);
@@ -90,6 +99,7 @@ export class Entity<SaveData extends object = {}> implements GameObject<EntitySa
 			id: this.id,
 			position: this.position.data,
 			rotation: this.rotation.data,
+			zone: this.zone,
 		});
 
 		for (const component of this.components) {

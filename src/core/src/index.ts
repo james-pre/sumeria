@@ -1,6 +1,7 @@
 export * from './Component.js';
 export * from './controls.js';
 export * from './Entity.js';
+export * from './game.js';
 export * from './object.js';
 export * from './player.js';
 export * from './protocol.js';

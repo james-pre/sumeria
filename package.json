@@ -34,6 +34,7 @@
 	},
 	"devDependencies": {
 		"@babylonjs/core": "^9.26.1",
+		"@babylonjs/loaders": "^9.27.1",
 		"@eslint/js": "^10.0.1",
 		"@sumeria/app": "workspace:*",
 		"@sumeria/client": "workspace:*",

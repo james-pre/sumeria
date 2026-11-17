@@ -7,6 +7,19 @@ const held = new Set<string>();
 
 let bindings: [string, Binding][] = [];
 
+export type Listener = (action: string, active: boolean) => void;
+
+const listeners = new Set<Listener>();
+
+/**
+ * Watches every action as it changes, for the ones the interface handles itself.
+ * They still reach the server, so a component can act on the same action.
+ */
+export function listen(listener: Listener): () => void {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
+}
+
 function setActive(action: string, active: boolean): void {
 	if (active === held.has(action)) return;
 
@@ -14,6 +27,8 @@ function setActive(action: string, active: boolean): void {
 	else held.delete(action);
 
 	socket.input(action, active);
+
+	for (const listener of listeners) listener(action, active);
 }
 
 function onKey(event: KeyboardEvent, down: boolean): void {
